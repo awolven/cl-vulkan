@@ -463,6 +463,8 @@
 	    (mem-aref p-blend-constants :float 3) blend-constant-a)))
   (values))
 
+(defparameter *shader-entry-name* (cffi:foreign-string-alloc "main"))
+
 (defun fill-pipeline-shader-stage-create-info (p-info &key
 							stage
 							module

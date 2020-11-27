@@ -21,8 +21,6 @@
 
 (in-package :vk)
 
-(defvar *shader-entry-name* (cffi:foreign-string-alloc "main"))
-
 (defun create-shader-module-from-file (device filename &key (allocator +null-allocator+))
   (multiple-value-bind (binary size) (read-shader-file filename)
     (unwind-protect (create-shader-module device binary size :allocator allocator)

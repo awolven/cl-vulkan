@@ -32,7 +32,7 @@
     (device-wait-idle device)
 
     (destroy-swapchain swapchain)
-    
+
     (let ((command-pool (find-command-pool device queue-family-index)))
       (loop for command-buffer across (command-buffers command-pool)
 	 do (free-command-buffer command-buffer)
@@ -41,9 +41,6 @@
       (destroy-command-pool command-pool))
 
     (destroy-frame-resources swapchain)
-
-    (vkDestroyDescriptorPool (h device) (h (first (descriptor-pools device)))
-			     (h (allocator (first (descriptor-pools device)))))
 
     (vkDestroySurfaceKHR (h (instance (render-surface window))) (h (render-surface window)) (h (allocator (instance (render-surface window)))))
     (glfwDestroyWindow (h window))

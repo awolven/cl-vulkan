@@ -71,6 +71,9 @@
       (check-vk-result
        (vkBeginCommandBuffer (h command-buffer) p-begin-info)))))
 
+(defun end-command-buffer (command-buffer)
+  (check-vk-result (vkEndCommandBuffer (h command-buffer))))
+
 (defun cmd-set-viewport (command-buffer &key (x 0.0f0) (y 0.0f0) width height (min-depth 0.0f0) (max-depth 1.0f0))
   (with-viewport (p-viewport :x x :y y :width width :height height :min-depth min-depth :max-depth max-depth)
     (vkCmdSetViewport (h command-buffer) 0 1 p-viewport)))

@@ -167,3 +167,31 @@
     (vkMapMemory (h device) (h uniform-buffer-memory) 0 size 0 pp-data)
     (memcpy (mem-aref pp-data :pointer) data size)
     (vkUnmapMemory (h device) (h uniform-buffer-memory))))
+
+(defun mmap-buffer (buffer array size)
+  (let ((memory (allocated-memory buffer))
+	(device (device buffer)))
+    (with-foreign-object (pp-dst :pointer)
+		    
+      (check-vk-result (vkMapMemory (h device) (h memory) 0 size 0 pp-dst))
+		  
+      (let ((p-dst (mem-aref pp-dst :pointer)))
+	(memcpy p-dst array size)
+		    
+	(with-foreign-object (p-range '(:struct VkMappedMemoryRange))
+	  (zero-struct p-range '(:struct VkMappedMemoryRange))
+		      
+	  (with-foreign-slots ((%vk::sType
+				%vk::memory
+				%vk::size)
+			       p-range (:struct VkMappedMemoryRange))
+	    
+	    (setf %vk::sType  VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE
+		  %vk::memory (h memory)
+		  %vk::size VK_WHOLE_SIZE))
+	  
+	  (check-vk-result (vkFlushMappedMemoryRanges (h device) 1 p-range))
+
+	  (vkUnmapMemory (h device) (h memory))
+	  
+	  (values))))))

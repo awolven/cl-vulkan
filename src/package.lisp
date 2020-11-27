@@ -239,6 +239,22 @@
 	   #:set-window-size
 	   #:set-window-aspect-ratio
 	   #:set-window-size-limits
+	   #:default-logical-device
+	   #:main-window
+	   #:queue-family-index
+	   #:render-surface
+	   #:command-buffers
+	   #:end-command-buffer
+	   #:h
+	   #:recreate-swapchain?
+	   #:frame-command-buffer
+	   #:clear-value
+	   #:number-of-images
+	   #:default-descriptor-pool
+	   #:frame-resource
+	   #:check-vk-result
+	   #:allocator
+	   #:mmap-buffer
 	   
 	   #:with-vertex-input-binding-description
 	   #:with-pipeline-vertex-input-state-create-info

@@ -102,7 +102,7 @@
 
     (shutdown-application app)))
 
-(defun run ()
+(defun run (&key (width 640) (height 480))
   (flet ((runit ()
 	   #+SBCL
 	   (sb-int:with-float-traps-masked (:invalid
@@ -111,10 +111,10 @@
 					    :underflow
 					    :divide-by-zero)
 				  
-	     (main (make-instance 'demo-application)))
+	     (main (make-instance 'demo-application :height height :width width)))
 
 	     #-SBCL
-	     (main (make-instance 'demo-application))))
+	     (main (make-instance 'demo-application :height height :width width))))
 
     #+(and darwin sbcl)
     (sb-thread:interrupt-thread (sb-thread:main-thread) #'runit)

@@ -140,46 +140,50 @@
 				     :p-attachments p-color-blend-attachments
 				     :attachment-count 1
 				     args)
-			      
-			      (with-dynamic-states (p-dynamic-states #-darwin 4 #+darwin 2)
-				(setf (mem-aref p-dynamic-states 'VkDynamicState 0) VK_DYNAMIC_STATE_VIEWPORT
-				      (mem-aref p-dynamic-states 'VkDynamicState 1) VK_DYNAMIC_STATE_SCISSOR)
-				#-darwin
-				(setf (mem-aref p-dynamic-states 'VKDynamicState 2) %vk::VK_DYNAMIC_STATE_LINE_STIPPLE_EXT
-				      (mem-aref p-dynamic-states 'VKDynamicState 3) VK_DYNAMIC_STATE_LINE_WIDTH)
-		      
-				(with-pipeline-dynamic-state-create-info (p-pipeline-dynamic-state-ci)
-				  (apply #'fill-pipeline-dynamic-state-create-info p-pipeline-dynamic-state-ci
-					 :dynamic-state-count 3 :p-dynamic-states p-dynamic-states args)
-			
-				  (with-pipeline-depth-stencil-state-create-info (p-depth-stencil)
-				    (apply #'fill-pipeline-depth-stencil-state-create-info p-depth-stencil args)
-				    (with-graphics-pipeline-create-info (p-pipeline-ci)
-				      (apply #'fill-graphics-pipeline-create-info p-pipeline-ci
-					     :stage-count shader-module-count
-					     :p-stages p-shader-stages
-					     :p-vertex-input-state p-pvisci
-					     :p-input-assembly-state p-piasci
-					     :p-viewport-state p-viewport-state
-					     :p-rasterization-state p-rasterizer
-					     :p-multisample-state p-multisampling
-					     :p-depth-stencil-state p-depth-stencil
-					     :p-color-blend-state p-color-blending
-					     :p-dynamic-state p-pipeline-dynamic-state-ci
-					     :layout (h pipeline-layout)
-					     :render-pass (h render-pass)
-					     args)
+			      (let ((dynamic-state-count
+				     #-(or darwin linux) 4
+				     #+(or darwin linux) 2))
+				(with-dynamic-states (p-dynamic-states dynamic-state-count)
 
-				      (with-foreign-object (p-graphics-pipeline 'VkPipeline)
-					(check-vk-result
-					 (vkCreateGraphicsPipelines 
-					  (h device) (h pipeline-cache) 1 p-pipeline-ci (h allocator) p-graphics-pipeline))
-					(make-instance 'graphics-pipeline :handle (mem-aref p-graphics-pipeline 'VkPipeline)
-						       :device device
-						       :allocator allocator
-						       :vertex-shader vertex-shader-module
-						       :geometry-shader geometry-shader-module
-						       :fragment-shader fragment-shader-module)))))))))))))))))))))
+				  (setf (mem-aref p-dynamic-states 'VkDynamicState 0) VK_DYNAMIC_STATE_VIEWPORT
+					(mem-aref p-dynamic-states 'VkDynamicState 1) VK_DYNAMIC_STATE_SCISSOR)
+				  #-(or darwin linux)
+				  (setf (mem-aref p-dynamic-states 'VKDynamicState 2) %vk::VK_DYNAMIC_STATE_LINE_STIPPLE_EXT
+					(mem-aref p-dynamic-states 'VKDynamicState 3) VK_DYNAMIC_STATE_LINE_WIDTH)
+		      
+				  (with-pipeline-dynamic-state-create-info (p-pipeline-dynamic-state-ci)
+				    (apply #'fill-pipeline-dynamic-state-create-info p-pipeline-dynamic-state-ci
+					   :dynamic-state-count dynamic-state-count
+					   :p-dynamic-states p-dynamic-states args)
+			
+				    (with-pipeline-depth-stencil-state-create-info (p-depth-stencil)
+				      (apply #'fill-pipeline-depth-stencil-state-create-info p-depth-stencil args)
+				      (with-graphics-pipeline-create-info (p-pipeline-ci)
+					(apply #'fill-graphics-pipeline-create-info p-pipeline-ci
+					       :stage-count shader-module-count
+					       :p-stages p-shader-stages
+					       :p-vertex-input-state p-pvisci
+					       :p-input-assembly-state p-piasci
+					       :p-viewport-state p-viewport-state
+					       :p-rasterization-state p-rasterizer
+					       :p-multisample-state p-multisampling
+					       :p-depth-stencil-state p-depth-stencil
+					       :p-color-blend-state p-color-blending
+					       :p-dynamic-state p-pipeline-dynamic-state-ci
+					       :layout (h pipeline-layout)
+					       :render-pass (h render-pass)
+					       args)
+
+					(with-foreign-object (p-graphics-pipeline 'VkPipeline)
+					  (check-vk-result
+					   (vkCreateGraphicsPipelines 
+					    (h device) (h pipeline-cache) 1 p-pipeline-ci (h allocator) p-graphics-pipeline))
+					  (make-instance 'graphics-pipeline :handle (mem-aref p-graphics-pipeline 'VkPipeline)
+							 :device device
+							 :allocator allocator
+							 :vertex-shader vertex-shader-module
+							 :geometry-shader geometry-shader-module
+							 :fragment-shader fragment-shader-module))))))))))))))))))))))
 
 (defun destroy-pipeline (pipeline)
   (with-slots (device allocator) pipeline

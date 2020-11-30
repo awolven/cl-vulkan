@@ -34,11 +34,12 @@
     (destroy-swapchain swapchain)
 
     (let ((command-pool (find-command-pool device queue-family-index)))
-      (loop for command-buffer across (command-buffers command-pool)
-	 do (free-command-buffer command-buffer)
-	 finally (setf (fill-pointer (command-buffers command-pool)) 0))
+      (when command-pool
+	(loop for command-buffer across (command-buffers command-pool)
+	   do (free-command-buffer command-buffer)
+	   finally (setf (fill-pointer (command-buffers command-pool)) 0))
 
-      (destroy-command-pool command-pool))
+	(destroy-command-pool command-pool)))
 
     (destroy-frame-resources swapchain)
 
@@ -93,7 +94,7 @@
 	  (let* ((device (apply #'create-logical-device gpu
 				:compute-queue-count compute-queue-count
 				:device-extensions
-				(list VK_KHR_SWAPCHAIN_EXTENSION_NAME "VK_EXT_line_rasterization")
+				(list VK_KHR_SWAPCHAIN_EXTENSION_NAME #-darwin "VK_EXT_line_rasterization")
 				:rectangular-lines rectangular-lines
 				:stippled-lines stippled-lines
 				:enable-wide-lines wide-lines

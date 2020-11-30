@@ -98,16 +98,27 @@
 
 			(setq current-frame (mod (1+ current-frame) (number-of-images swapchain))))))))))
     
-    #+SBCL
-    (sb-int:with-float-traps-masked (:invalid
-				     :inexact
-				     :overflow
-				     :underflow
-				     :divide-by-zero)
-				    
-				    (real-main))
-
-    #-SBCL
     (real-main)
 
     (shutdown-application app)))
+
+(defun run ()
+  (flet ((runit ()
+	   #+SBCL
+	   (sb-int:with-float-traps-masked (:invalid
+					    :inexact
+					    :overflow
+					    :underflow
+					    :divide-by-zero)
+				  
+	     (main (make-instance 'demo-application)))
+
+	     #-SBCL
+	     (main (make-instance 'demo-application))))
+
+    #+(and darwin sbcl)
+    (sb-thread:interrupt-thread (sb-thread:main-thread) #'runit)
+
+    #-darwin
+    (runit)))
+  

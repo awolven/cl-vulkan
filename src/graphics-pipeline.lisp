@@ -141,12 +141,12 @@
 				     :attachment-count 1
 				     args)
 			      
-			      (with-dynamic-states (p-dynamic-states 4)
+			      (with-dynamic-states (p-dynamic-states #-darwin 4 #+darwin 2)
 				(setf (mem-aref p-dynamic-states 'VkDynamicState 0) VK_DYNAMIC_STATE_VIEWPORT
-				      (mem-aref p-dynamic-states 'VkDynamicState 1) VK_DYNAMIC_STATE_SCISSOR
-				      (mem-aref p-dynamic-states 'VKDynamicState 2) %vk::VK_DYNAMIC_STATE_LINE_STIPPLE_EXT
-				      (mem-aref p-dynamic-states 'VKDynamicState 3) VK_DYNAMIC_STATE_LINE_WIDTH
-				      )
+				      (mem-aref p-dynamic-states 'VkDynamicState 1) VK_DYNAMIC_STATE_SCISSOR)
+				#-darwin
+				(setf (mem-aref p-dynamic-states 'VKDynamicState 2) %vk::VK_DYNAMIC_STATE_LINE_STIPPLE_EXT
+				      (mem-aref p-dynamic-states 'VKDynamicState 3) VK_DYNAMIC_STATE_LINE_WIDTH)
 		      
 				(with-pipeline-dynamic-state-create-info (p-pipeline-dynamic-state-ci)
 				  (apply #'fill-pipeline-dynamic-state-create-info p-pipeline-dynamic-state-ci

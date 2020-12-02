@@ -22,7 +22,7 @@
 (in-package :cl-user)
 
 (cl:defpackage :vk
-  (:use :cl :cffi :%vk :%glfw)
+  (:use :cl :cffi :cffi-sys :%vk :%glfw)
   (:export #:VK_WHOLE_SIZE
 	   #:allocation-callbacks
 	   #:pipeline-cache
@@ -54,7 +54,7 @@
 	   #:extent-2D
 	   #:dedicated-queue
 	   #:multipurpose-queue
-	   #:image
+	   ;;#:image
 	   #:depth-image
 	   #:image-view
 	   #:render-pass
@@ -255,6 +255,12 @@
 	   #:check-vk-result
 	   #:allocator
 	   #:mmap-buffer
+	   #:window-frame-data
+	   #:window-registry
+	   #:vulkan-module
+	   #:vulkan-instance
+	   #:current-frame
+	   #:image-index
 	   
 	   #:with-vertex-input-binding-description
 	   #:with-pipeline-vertex-input-state-create-info

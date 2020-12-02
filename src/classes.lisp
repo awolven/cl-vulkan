@@ -887,3 +887,6 @@
    (allocation-callbacks :initform +null-allocator+ :initarg :allocator :reader allocator)
    (window-registry :initform nil :accessor window-registry)
    (main-window :accessor main-window)))
+
+(defclass vulkan-module ()
+  ((application :reader application :initarg :application)))

@@ -30,9 +30,7 @@
 	       pairs)))
 
 (defparameter *home-dir*
-  #-(or darwin windows) "/home/awolven"
-  #+darwin "/Users/awolven"
-  #+windows "C:/Users/awolven")
+  (namestring (user-homedir-pathname)))
 
 (defparameter *cl-vulkan-dir*
   (namestring (asdf/system:system-relative-pathname :cl-vulkan "")))

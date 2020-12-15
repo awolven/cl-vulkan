@@ -69,8 +69,7 @@
 				      (stippled-lines #+windows t #+(or darwin linux) nil)
 			   &allow-other-keys)
   (let ((vulkan-instance
-	 (or *vulkan-instance*
-	     (apply #'create-instance #+darwin :layer-names #+darwin nil args))))
+	 (or *vulkan-instance* (apply #'create-instance args))))
     (setf (vulkan-instance app) vulkan-instance)
     (let ((debug-callback (when (debug-report-present? vulkan-instance)
 			    (create-debug-report-callback vulkan-instance 'debug-report-callback))))

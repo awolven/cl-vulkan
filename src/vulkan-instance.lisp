@@ -31,7 +31,7 @@
 	(check-vk-result (vkEnumerateInstanceLayerProperties p-property-count p-properties))
 	(remove-duplicates 
 	 (loop for i from 0 below (mem-aref p-property-count :int)
-	    collect (let ((p-property (mem-aptr p-properties '(:struct VkLayerProperties i))))
+	    collect (let ((p-property (mem-aptr p-properties '(:struct VkLayerProperties) i)))
 		      (list (foreign-string-to-lisp (foreign-slot-pointer p-property '(:struct VkLayerProperties) '%vk::layerName))
 			    (foreign-slot-value p-property '(:struct VkLayerProperties) '%vk::specVersion)
 			    (foreign-slot-value p-property '(:struct VkLayerProperties) '%vk::implementationVersion)
@@ -47,29 +47,13 @@
 	  (check-vk-result (vkEnumerateInstanceExtensionProperties p-layer-name p-property-count p-properties))
 	  (remove-duplicates 
 	   (loop for i from 0 below (mem-aref p-property-count :int)
-	      append (let ((p-property (mem-aptr p-properties '(:struct VkExtensionProperties i))))
+	      append (let ((p-property (mem-aptr p-properties '(:struct VkExtensionProperties) i)))
 			(list (foreign-string-to-lisp (foreign-slot-pointer p-property '(:struct VkExtensionProperties) '%vk::extensionName))
 			      (foreign-slot-value p-property '(:struct VkExtensionProperties) '%vk::specVersion))))
 	   :test #'equalp))))))
 
-(defparameter *validation-layers*
-  #+linux nil
-  #-linux
-  (list ;;#-darwin "VK_LAYER_LUNARG_vktrace" ;; note: trying to enable this layer causes vkcreateinstance to fail, needs to find a connection.
-	"VK_LAYER_GOOGLE_unique_objects" ;; the rest seem to work fine
-	"VK_LAYER_GOOGLE_threading"
-	"VK_LAYER_LUNARG_parameter_validation"
-	"VK_LAYER_LUNARG_standard_validation"
-	#-darwin "VK_LAYER_LUNARG_screenshot"
-	"VK_LAYER_LUNARG_object_tracker"
-	#-darwin "VK_LAYER_LUNARG_monitor"
-	#-darwin "VK_LAYER_LUNARG_device_simulation"
-	"VK_LAYER_LUNARG_core_validation"
-	#-darwin "VK_LAYER_LUNARG_assistant_layer"
-	#-darwin "VK_LAYER_LUNARG_api_dump"))
-
 (defun available-layers ()
-  (remove-duplicates (append (mapcar #'first (enumerate-instance-layer-properties)) *validation-layers*) :test #'string=))
+  (mapcar #'first (enumerate-instance-layer-properties)))
 
 (defun available-extensions ()
   (mapcar #'first (remove-duplicates (remove-if #'null (mapcar #'enumerate-instance-extension-properties (available-layers))) :test #'equalp)))
@@ -99,16 +83,17 @@
 			  (allocator +null-allocator+)
 			  &allow-other-keys)
 
-  (when (and (numberp *debug*) (> *debug* 1))
-    (pushnew "VK_LAYER_LUNARG_api_dump" layer-names :test #'string=))
+  (let ((available-layers (available-layers))
+	(available-extensions (available-extensions)))
 
-  (let ((available-layers #+(or windows linux) (available-layers)
-			  #+darwin (when layer-names (available-layers)))
-	(available-extensions #+windows (available-extensions)
-			      #+darwin (when extension-names (available-extensions))))
+    (when (and (numberp *debug*) (> *debug* 1)
+	       (find "VK_LAYER_LUNARG_api_dump" available-layers :test #'string=))
+      (pushnew "VK_LAYER_LUNARG_api_dump" layer-names :test #'string=))
+    
     (loop for layer in layer-names
        unless (find layer available-layers :test #'string=)
        do (error "layer ~S is not available" layer))
+    
     (loop for ext in extension-names
        unless (find ext available-extensions :test #'string=)
        do (error "extension ~S is not available" ext)))	    
@@ -215,23 +200,23 @@
 				     (progn
 				       (setq result (try-create-inst :validation t :debug t))
 				       (if (eq result VK_ERROR_LAYER_NOT_PRESENT)
-					   (progn (warn "Trying to create vulkan instance \
+					   (progn (warn "Trying to create vulkan instance ~
 with VK_LAYER_LUNARG_STANDARD_VALIDATION failed, falling back...")
 						  (setq result (try-create-inst :debug t))
 						  (if (eq result VK_ERROR_EXTENSION_NOT_PRESENT)
 						      (progn
-							(warn "Trying to create vulkan instance \
+							(warn "Trying to create vulkan instance ~
 with VK_EXT_debug_report failed, falling back...")
 							(check-vk-result (try-create-inst)))
 						      (if (eq result VK_SUCCESS)
 							  (setq debug-report-present t)
 							  (check-vk-result result))))
 					   (if (eq result VK_ERROR_EXTENSION_NOT_PRESENT)
-					       (progn (warn "Trying to create vulkan instance \
+					       (progn (warn "Trying to create vulkan instance ~
 with VK_EXT_debug_report failed, falling back...")
 						      (setq result (try-create-inst :validation t))
 						      (if (eq result VK_ERROR_LAYER_NOT_PRESENT)
-							  (warn "Trying to create vulkan instance \
+							  (warn "Trying to create vulkan instance ~
 with VK_LAYER_LUNARG_STANDARD_VALIDATION failed, falling back...")
 							  (if (eq result VK_SUCCESS)
 							      (setq debug-report-present t)

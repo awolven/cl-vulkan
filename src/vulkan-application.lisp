@@ -24,7 +24,7 @@
 (defvar *app*)
 
 (defmethod shutdown-application (app)
-  (let* ((window (first (last (window-registry app))))
+  (let* ((window (main-window app))
 	 (swapchain (swapchain window))
 	 (device (device swapchain))
 	 (queue-family-index (queue-family-index (render-surface window))))
@@ -33,6 +33,11 @@
 
     (destroy-swapchain swapchain)
 
+    (when (render-pass swapchain)
+      ;; we're sharing one render pass with all windows, only destroy renderpass when shutting down main window
+      (destroy-render-pass (render-pass swapchain))
+      (setf (render-pass swapchain) nil))
+
     (let ((command-pool (find-command-pool device queue-family-index)))
       (when command-pool
 	(loop for command-buffer across (command-buffers command-pool)
@@ -40,8 +45,6 @@
 	   finally (setf (fill-pointer (command-buffers command-pool)) 0))
 
 	(destroy-command-pool command-pool)))
-
-    (destroy-frame-resources swapchain)
 
     (vkDestroySurfaceKHR (h (instance (render-surface window))) (h (render-surface window)) (h (allocator (instance (render-surface window)))))
     (glfwDestroyWindow (h window))

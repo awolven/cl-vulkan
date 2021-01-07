@@ -75,9 +75,10 @@
     (let ((framebuffers (framebuffers swapchain))
 	  (device-handle (h device))
 	  (allocator-handle (h allocator)))
-      (loop for framebuffer across framebuffers
-	 do (vkDestroyFramebuffer device-handle (h framebuffer) allocator-handle)
-	 finally (setf (framebuffers swapchain) nil)))))
+      (when framebuffers
+	(loop for framebuffer across framebuffers
+	   do (vkDestroyFramebuffer device-handle (h framebuffer) allocator-handle)
+	   finally (setf (framebuffers swapchain) nil))))))
   (values))
 
 (defun destroy-framebuffer (framebuffer)

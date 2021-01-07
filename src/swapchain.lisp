@@ -171,13 +171,15 @@
     (when (depth-image swapchain)
       (destroy-image (depth-image swapchain))
       (setf (depth-image swapchain) nil))
-	
-    (loop for image-view across (color-image-views swapchain)
-       do (destroy-image-view image-view)
-	 (setf (color-image-views swapchain) nil))
+
+    (when (color-image-views swapchain)
+      (loop for image-view across (color-image-views swapchain)
+	 do (destroy-image-view image-view)
+	   (setf (color-image-views swapchain) nil)))
 	
     (destroy-framebuffers swapchain)
-	
+
+    #+NIL
     (when (render-pass swapchain)
       (destroy-render-pass (render-pass swapchain))
       (setf (render-pass swapchain) nil))

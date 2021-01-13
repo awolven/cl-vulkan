@@ -33,11 +33,6 @@
 
     (destroy-swapchain swapchain)
 
-    (when (render-pass swapchain)
-      ;; we're sharing one render pass with all windows, only destroy renderpass when shutting down main window
-      (destroy-render-pass (render-pass swapchain))
-      (setf (render-pass swapchain) nil))
-
     (let ((command-pool (find-command-pool device queue-family-index)))
       (when command-pool
 	(loop for command-buffer across (command-buffers command-pool)

@@ -77,7 +77,8 @@
 
 		      (when (recreate-swapchain? main-window)
 			(multiple-value-bind (width height) (get-framebuffer-size main-window)
-			  (recreate-swapchain main-window (swapchain main-window) width height)))
+			  (recreate-swapchain main-window (swapchain main-window) width height)
+			  (setf (recreate-swapchain? main-window) nil)))			
 
 		      (let* ((swapchain (swapchain main-window))
 			     (command-buffer (frame-command-buffer

@@ -179,7 +179,6 @@
 	
     (destroy-framebuffers swapchain)
 
-    #+NIL
     (when (render-pass swapchain)
       (destroy-render-pass (render-pass swapchain))
       (setf (render-pass swapchain) nil))

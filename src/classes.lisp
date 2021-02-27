@@ -850,6 +850,14 @@
 (defclass descriptor-storage-buffer-info (descriptor-buffer-info)
   ((descriptor-type :reader descriptor-type :initform VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)))
 
+(defclass descriptor-image-info ()
+  ((vk::descriptor-type :reader vk::descriptor-type
+		    :initform VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+   (image-layout :reader descriptor-image-info-image-layout :initarg :image-layout
+		 :initform VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+   (image-view :reader descriptor-image-info-image-view :initarg :image-view)
+   (sampler :reader descriptor-image-info-sampler :initarg :sampler)))
+
 (defclass command-buffer (handle-mixin logical-device-mixin)
   ((command-pool :initarg :command-pool :reader command-pool)))
 

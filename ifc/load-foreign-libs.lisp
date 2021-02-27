@@ -37,7 +37,7 @@
   (sb-posix:setenv "VULKAN_FRAMEWORK_PATH" (concatenate 'string vulkan-sdk-path "/Frameworks") 0)
   (sb-posix:setenv "DYLD_FRAMEWORK_PATH" (concatenate 'string vulkan-sdk-path "/Frameworks") 0))
 
-#+linux
+#+swiftshader
 (sb-posix:setenv "VK_ICD_FILENAMES"
 		 (concatenate 'string *home-dir* "/swiftshader-build1/Linux/vk_swiftshader_icd.json") 0)
 

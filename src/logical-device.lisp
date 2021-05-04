@@ -42,7 +42,7 @@
 				    (enable-logic-op nil)
 				    (enable-multi-draw-indirect nil)
 				    (enable-draw-indirect-first-instance nil)
-				    (enable-depth-clamp #-linux t #+linux nil)
+				    (enable-depth-clamp #-swiftshader t #+swiftshader nil)
 				    (enable-depth-bias-clamp nil)
 				    (enable-fill-mode-non-solid nil)
 				    (enable-depth-bounds nil)

@@ -189,7 +189,8 @@
 
 (defun recreate-swapchain (window swapchain fb-width fb-height)
   (loop while (or (zerop fb-width) (zerop fb-height))
-     do (glfwWaitEvents))
+     do (multiple-value-setq (fb-width fb-height) (get-framebuffer-size window))
+       (glfwWaitEvents))
   
   (if (not (or (zerop fb-width) (zerop fb-height)))
       (with-slots (application) window

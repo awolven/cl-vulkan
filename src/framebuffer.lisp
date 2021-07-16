@@ -61,7 +61,7 @@
        finally (setf (framebuffers swapchain) array)))
   (values))
 
-(defun resize-framebuffer (window width height)
+(defmethod resize-framebuffer (window width height)
   ;; imgui docking branch just sets a flag and does actual resize buffer in the
   ;; beginning of the render loop.  Could avoid certain errors.  Consider changing.
   (setf (recreate-swapchain? window) t

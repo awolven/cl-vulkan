@@ -219,6 +219,7 @@
 	   #:error-callback-function
 	   #:set-window-close-callback
 	   #:find-window
+	   #:window-class
 	   #:create-window
 	   #:create-vulkan-window
 	   #:destroy-window

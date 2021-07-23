@@ -39,6 +39,9 @@
   (find handle (window-registry *app*)
 	:key #'h :test #'pointer-eq))
 
+(defmethod window-class (app)
+  'window)
+
 (defun create-window (app &key title width height)
 
   (assert (typep width 'integer))
@@ -55,7 +58,7 @@
   (glfwWindowHint GLFW_CLIENT_API GLFW_NO_API)
   
   (let ((window
-	 (make-instance 'window
+	 (make-instance (window-class app)
 			:app app
 			:handle (glfwCreateWindow width height title +nullptr+ +nullptr+))))
 

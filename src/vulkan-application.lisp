@@ -61,9 +61,9 @@
 	(create-vulkan-window instance (default-logical-device instance) title width height))
   (values))
 
-(defun setup-vulkan (app &rest args &key (compute-queue-count #+windows 1 #+(or darwin linux) 0)
+(defun setup-vulkan (app &rest args &key (compute-queue-count 0)
 				      (wide-lines #+windows t #+(or darwin linux) nil)
-				      (rectangular-lines #+windows t #+(or darwin linux) nil)
+				      (rectangular-lines nil)
 				      (stippled-lines #+windows t #+(or darwin linux) nil)
 			   &allow-other-keys)
   (let ((vulkan-instance

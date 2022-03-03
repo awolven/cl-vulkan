@@ -200,24 +200,20 @@
 				     (progn
 				       (setq result (try-create-inst :validation t :debug t))
 				       (if (eq result VK_ERROR_LAYER_NOT_PRESENT)
-					   (progn (warn "Trying to create vulkan instance ~
-with VK_LAYER_LUNARG_STANDARD_VALIDATION failed, falling back...")
+					   (progn (warn "Trying to create vulkan instance with VK_LAYER_LUNARG_STANDARD_VALIDATION failed, falling back...")
 						  (setq result (try-create-inst :debug t))
 						  (if (eq result VK_ERROR_EXTENSION_NOT_PRESENT)
 						      (progn
-							(warn "Trying to create vulkan instance ~
-with VK_EXT_debug_report failed, falling back...")
+							(warn "Trying to create vulkan instance with VK_EXT_debug_report failed, falling back...")
 							(check-vk-result (try-create-inst)))
 						      (if (eq result VK_SUCCESS)
 							  (setq debug-report-present t)
 							  (check-vk-result result))))
 					   (if (eq result VK_ERROR_EXTENSION_NOT_PRESENT)
-					       (progn (warn "Trying to create vulkan instance ~
-with VK_EXT_debug_report failed, falling back...")
+					       (progn (warn "Trying to create vulkan instance with VK_EXT_debug_report failed, falling back...")
 						      (setq result (try-create-inst :validation t))
 						      (if (eq result VK_ERROR_LAYER_NOT_PRESENT)
-							  (warn "Trying to create vulkan instance ~
-with VK_LAYER_LUNARG_STANDARD_VALIDATION failed, falling back...")
+							  (warn "Trying to create vulkan instance with VK_LAYER_LUNARG_STANDARD_VALIDATION failed, falling back...")
 							  (if (eq result VK_SUCCESS)
 							      (setq debug-report-present t)
 							      (check-vk-result (try-create-inst)))))

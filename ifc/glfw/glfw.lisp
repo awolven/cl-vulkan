@@ -550,6 +550,11 @@
 (cffi:defcfun ("glfwGetMonitorName" glfwGetMonitorName) :string
   (monitor :pointer))
 
+(cffi:defcfun ("glfwGetMonitorContentScale" glfwGetMonitorContentScale) :void
+  (monitor :pointer)
+  (x_scale :pointer)
+  (y_scale :pointer))
+
 (cffi:defcfun ("glfwSetMonitorCallback" glfwSetMonitorCallback) :pointer
   (cbfun :pointer))
 

@@ -143,6 +143,9 @@
 		  finally
 		    (setf
 		     (mem-aref pp-enabled-layer-names-with-validation '(:pointer :char) i)
+             #-NVIDIA
+             (foreign-string-alloc "VK_LAYER_KHRONOS_validation")
+             #+NVIDIA
 		     (foreign-string-alloc "VK_LAYER_LUNARG_standard_validation")))
 	       
 	       (with-vk-struct (p-application-info VkApplicationInfo)

@@ -88,7 +88,7 @@
 	    (with-foreign-slots ((%vk::flags)
 				 p-begin-info (:struct VkCommandBufferBeginInfo))
 	      (setf %vk::flags VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
-	      (vkBeginCommandBuffer command-buffer p-begin-info)
+	      (vkBeginCommandBuffer (h command-buffer) p-begin-info)
 	      (with-vk-struct (p-copy-region VkBufferCopy)
 		(with-foreign-slots ((%vk::srcOffset
 				      %vk::dstOffset

@@ -41,19 +41,19 @@
   (let ((pool-size-count (length descriptor-types)))
     (with-foreign-object (p-pool-sizes '(:struct VkDescriptorPoolSize) pool-size-count)
       (loop for i from 0 for descriptor-type in descriptor-types
-	 do (let ((p-pool-size (mem-aptr p-pool-sizes '(:struct VkDescriptorPoolSize) i)))
-	      (setf (foreign-slot-value p-pool-size '(:struct VkDescriptorPoolSize) '%vk::type)
-		    descriptor-type
-		    (foreign-slot-value p-pool-size '(:struct VkDescriptorPoolSize) '%vk::descriptorCount)
-		    descriptor-count)))
+	          do (let ((p-pool-size (mem-aptr p-pool-sizes '(:struct VkDescriptorPoolSize) i)))
+	               (setf (foreign-slot-value p-pool-size '(:struct VkDescriptorPoolSize) '%vk::type)
+		                   descriptor-type
+		                   (foreign-slot-value p-pool-size '(:struct VkDescriptorPoolSize) '%vk::descriptorCount)
+		                   descriptor-count)))
       (with-vk-struct (p-pool-info VkDescriptorPoolCreateInfo)
       	(with-foreign-slots ((%vk::flags %vk::maxSets %vk::poolSizeCount %vk::pPoolSizes)
-			     p-pool-info (:struct VkDescriptorPoolCreateInfo))
-	  (setf %vk::flags 0;;VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
-		%vk::maxSets (* (length descriptor-types) descriptor-count)
-		%vk::poolSizeCount pool-size-count
-		%vk::pPoolSizes p-pool-sizes)
-	  (with-foreign-object (p-descriptor-pool 'VkDescriptorPool)
-	    (check-vk-result (vkCreateDescriptorPool (h device) p-pool-info (h allocator) p-descriptor-pool))
-	    (make-instance 'descriptor-pool :handle (mem-aref p-descriptor-pool 'VkDescriptorPool)
-			   :device device :allocator allocator)))))))
+			                       p-pool-info (:struct VkDescriptorPoolCreateInfo))
+	        (setf %vk::flags VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
+		            %vk::maxSets (* (length descriptor-types) descriptor-count)
+		            %vk::poolSizeCount pool-size-count
+		            %vk::pPoolSizes p-pool-sizes)
+	        (with-foreign-object (p-descriptor-pool 'VkDescriptorPool)
+	          (check-vk-result (vkCreateDescriptorPool (h device) p-pool-info (h allocator) p-descriptor-pool))
+	          (make-instance 'descriptor-pool :handle (mem-aref p-descriptor-pool 'VkDescriptorPool)
+			                                      :device device :allocator allocator)))))))

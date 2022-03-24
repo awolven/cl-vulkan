@@ -52,7 +52,7 @@
 				      %vk::basePipelineHandle
 				      %vk::basePipelineIndex)
 				     p-create-info (:struct VkComputePipelineCreateInfo))
-		
+
 		  (setf %vk::sType VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO
 			%vk::pNext +nullptr+
 			%vk::flags (slot-value ci 'flags)

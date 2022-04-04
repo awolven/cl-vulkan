@@ -21,7 +21,7 @@
 
 (defsystem cl-vulkan
   :description "Bindings for using Vulkan with Common Lisp"
-  :depends-on (:cffi)
+  :depends-on (:cffi :bordeaux-threads)
   :author "Andrew K Wolven <awolven@gmail.com>"
   :components
   ((:file "ifc/glfw/package")
@@ -45,7 +45,9 @@
    (:file "src/memory-type")
    (:file "src/memory-heap")
    (:file "src/logical-device")
+   (:file "src/fence")
    (:file "src/swapchain")
+   (:file "src/memory-pool")
    (:file "src/vulkan-application")
    (:file "src/window")
    (:file "src/surface-format")

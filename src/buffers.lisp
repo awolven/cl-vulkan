@@ -48,27 +48,33 @@
     
     (with-vk-struct (p-alloc-info VkMemoryAllocateInfo)
       (with-foreign-slots ((%vk::allocationSize
-			    %vk::memoryTypeIndex)
-			   p-alloc-info
-			   (:struct VkMemoryAllocateInfo))
-	(setf %vk::allocationSize
-	      (foreign-slot-value p-requirements '(:struct VkMemoryRequirements) '%vk::size)
-	      %vk::memoryTypeIndex
-	      (find-memory-type
-	       (physical-device device)
-	       (foreign-slot-value p-requirements '(:struct VkMemoryRequirements) '%vk::memoryTypeBits)
-	       properties)))
+			                %vk::memoryTypeIndex)
+			               p-alloc-info
+			               (:struct VkMemoryAllocateInfo))
+	    (setf %vk::allocationSize
+	          (foreign-slot-value p-requirements '(:struct VkMemoryRequirements) '%vk::size)
+	          %vk::memoryTypeIndex
+	          (find-memory-type
+	           (physical-device device)
+	           (foreign-slot-value p-requirements '(:struct VkMemoryRequirements) '%vk::memoryTypeBits)
+	           properties)))
       (with-foreign-object (p-buffer-memory 'VkDeviceMemory)
-	(check-vk-result (vkAllocateMemory (h device) p-alloc-info (h allocator) p-buffer-memory))
-	(make-instance 'allocated-memory :handle (mem-aref p-buffer-memory 'VkDeviceMemory)
-		       :device device
-		       :allocator allocator
-		       :alignment (foreign-slot-value p-requirements
-						      '(:struct VkMemoryRequirements)
-						      '%vk::alignment))))))
+	    (check-vk-result (vkAllocateMemory (h device) p-alloc-info (h allocator) p-buffer-memory))
+	    (make-instance 'allocated-memory :handle (mem-aref p-buffer-memory 'VkDeviceMemory)
+		                                 :device device
+		                                 :allocator allocator
+		                                 :alignment (foreign-slot-value p-requirements
+						                                                '(:struct VkMemoryRequirements)
+						                                                '%vk::alignment))))))
 
-(defun bind-buffer-memory (device buffer buffer-memory)
-  (vkBindBufferMemory (h device) (h buffer) (h buffer-memory) 0))
+(defun bind-buffer-memory (device buffer buffer-memory &optional (offset 0))
+  (vkBindBufferMemory (h device) (h buffer) (h buffer-memory) offset))
+
+(defun bind-buffer-memory-resource (device buffer memory-resource &optional (offset 0))
+  (vkBindBufferMemory (h device) (h buffer)
+                      (h (vk::allocation
+                          (vk::memory-resource-memory-pool memory-resource)))
+                      offset))
 
 (defun copy-buffer (device command-pool queue src-buffer dst-buffer size)
   (with-vk-struct (p-alloc-info VkCommandBufferAllocateInfo)

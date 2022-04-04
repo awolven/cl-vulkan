@@ -91,7 +91,10 @@
 	   #:command-buffer
 	   #:sampler
 	   #:draw-index-cmd
+	   #:acquire-memory-sized
+	   #:release-memory
 
+	   #:with-fences
 	   #:create-buffer-1
 	   #:destroy-buffer
 	   #:allocate-buffer-memory

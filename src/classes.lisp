@@ -75,7 +75,8 @@
    (fb-height :initarg :height :reader fb-height)
    (framebuffers :accessor framebuffers)
    (render-pass :accessor render-pass :initarg :render-pass)
-   (frame-resources :accessor frame-resources)))
+   (frame-resources :accessor frame-resources)
+   (current-frame :accessor current-frame :initform 0)))
 
 (defclass frame-resources ()
   ((fence :reader fence :initarg :fence)
@@ -826,7 +827,10 @@
   ())
 
 (defclass allocated-memory (handle-mixin logical-device-mixin)
-  ((alignment :initarg :alignment :reader alignment)))
+  ((alignment :initarg :alignment :reader alignment)
+   (size :initarg :size :reader allocated-memory-size)
+   (memory-type :initarg :properties :reader allocated-memory-memory-type)))
+
 
 (defclass uniform-buffer (buffer)
   ())
@@ -894,7 +898,16 @@
    (default-descriptor-pool :accessor default-descriptor-pool)
    (allocation-callbacks :initform +null-allocator+ :initarg :allocator :reader allocator)
    (window-registry :initform nil :accessor window-registry)
-   (main-window :accessor main-window)))
+   (main-window :accessor main-window)
+   (large-device-local-memory-pool
+    :accessor large-device-local-memory-pool
+    :initform nil)
+   (large-host-visible-memory-pool
+    :accessor large-host-visible-memory-pool
+    :initform nil)
+   (small-host-visible-memory-pool
+    :accessor small-host-visible-memory-pool
+    :initform nil)))
 
 (defclass vulkan-module ()
   ((application :reader application :initarg :application)))

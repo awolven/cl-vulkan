@@ -885,7 +885,17 @@
 
 (defparameter +null-descriptor-set-layout+ (make-instance 'null-descriptor-set-layout))
 
-(defclass vulkan-application-mixin ()
+(defclass glfw-application-mixin ()
+  ((shift-key-down? :accessor shift-key-down? :initform nil)
+   (ctrl-key-down? :accessor ctrl-key-down? :initform nil)
+   (meta-key-down? :accessor meta-key-down? :initform nil)
+   (super-key-down? :accessor super-key-down? :initform nil)
+   (mouse-down? :accessor mouse-down? :initform (vector nil nil nil))
+   (current-cursor-pos :accessor current-cursor-pos :initform nil)
+   (previous-cursor-pos :accessor previous-cursor-pos :initform nil)
+   (mouse-delta :accessor mouse-delta :initform nil)))
+
+(defclass vulkan-application-mixin (glfw-application-mixin)
   ((application-name :accessor application-name :initform "CL-Vulkan Demo" :initarg :name)
    (vulkan-instance :accessor vulkan-instance)
    (default-logical-device :accessor default-logical-device)

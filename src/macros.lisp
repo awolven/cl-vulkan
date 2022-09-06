@@ -110,12 +110,12 @@
 			   %vk::maxDepth)
 			  ,var
 			  (:struct VkViewport))
-       (setf %vk::x (coerce ,x 'single-float)
-	     %vk::y (coerce ,y 'single-float)
-	     %vk::width (coerce ,width 'single-float)
-	     %vk::height (coerce ,height 'single-float)
-	     %vk::minDepth (coerce ,min-depth 'single-float)
-	     %vk::maxDepth (coerce ,max-depth 'single-float))
+       (setf %vk::x (clampf ,x)
+	     %vk::y (clampf ,y)
+	     %vk::width (clampf ,width)
+	     %vk::height (clampf ,height)
+	     %vk::minDepth (clampf ,min-depth)
+	     %vk::maxDepth (clampf ,max-depth))
        ,@body)))
 
 (defmacro with-scissor ((var &key width height

@@ -32,6 +32,7 @@
    (:file "ifc/vulkan/vk-macros")
    (:file "ifc/vulkan/vk-funcs")
    (:file "src/package")
+   (:file "src/utilities")
    (:file "src/macros")
    (:file "src/support")
    (:file "src/helpers")

@@ -279,8 +279,8 @@
 			     p-viewports (:struct VkViewport))
 	  (setf %vk::x 0.0f0
 		%vk::y 0.0f0
-		%vk::width (coerce (fb-width swapchain) 'single-float)
-		%vk::height (coerce (fb-height swapchain) 'single-float)
+		%vk::width (clampf (fb-width swapchain))
+		%vk::height (clampf (fb-height swapchain))
 		%vk::minDepth 0.0f0
 		%vk::maxDepth 1.0f0))
 

@@ -284,4 +284,15 @@
 	   #:with-pipeline-color-blend-state-create-info
 	   #:api-version
 	   #:with-viewport
-	   #:with-scissor))
+	   #:with-scissor
+
+	   #:clampf
+
+	   #:shift-key-down?
+	   #:ctrl-key-down?
+	   #:meta-key-down?
+	   #:super-key-down?
+	   #:mouse-down?
+	   #:current-cursor-pos
+	   #:previous-cursor-pos
+	   #:mouse-delta))

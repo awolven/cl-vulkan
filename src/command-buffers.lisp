@@ -119,8 +119,9 @@
 
 (defun cmd-bind-index-buffer (command-buffer index-buffer &optional (offset 0) (integer-type :unsigned-short))
   (vkCmdBindIndexBuffer (h command-buffer) (h index-buffer) offset (ecase integer-type
-								     (:unsigned-short VK_INDEX_TYPE_UINT16)
-								     (:unsigned-int32 VK_INDEX_TYPE_UINT32))))
+                                                                     (:unsigned-short VK_INDEX_TYPE_UINT16)
+                                                                     (:unsigned-int VK_INDEX_TYPE_UINT32)
+                                                                     (:unsigned-int32 VK_INDEX_TYPE_UINT32))))
 
 (defun cmd-draw-indexed (command-buffer command)
   (vkCmdDrawIndexed (h command-buffer)

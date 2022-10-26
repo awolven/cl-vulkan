@@ -26,6 +26,13 @@
     (check-vk-result (vkGetPhysicalDeviceSurfacePresentModesKHR (h gpu) (h surface) p-count +nullptr+))
     (let ((count (mem-aref p-count :uint32)))
       (with-foreign-object (p-present-modes 'VkPresentModeKHR count)
-	(check-vk-result (vkGetPhysicalDeviceSurfacePresentModesKHR (h gpu) (h surface) p-count p-present-modes))
-	(loop for i from 0 below (mem-aref p-count :uint32)
-	   collect (mem-aref p-present-modes 'VkPresentModeKHR i))))))
+	      (check-vk-result (vkGetPhysicalDeviceSurfacePresentModesKHR (h gpu) (h surface) p-count p-present-modes))
+	      (loop for i from 0 below (mem-aref p-count :uint32)
+	            collect (mem-aref p-present-modes 'VkPresentModeKHR i))))))
+
+(defun get-physical-device-surface-present-mode (gpu surface)
+  (let ((present-modes (get-present-modes gpu surface)))
+    (if (member VK_PRESENT_MODE_MAILBOX_KHR present-modes)
+        #+PRESENT-MODE-MAILBOX VK_PRESENT_MODE_MAILBOX_KHR
+        #-PRESENT-MODE-MAILBOX VK_PRESENT_MODE_FIFO_KHR
+        VK_PRESENT_MODE_FIFO_KHR)))

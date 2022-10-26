@@ -22,71 +22,71 @@
 (in-package :vk)
 
 (defun create-logical-device (gpu &key (device-extensions (list VK_KHR_SWAPCHAIN_EXTENSION_NAME))
-				    (allocator +null-allocator+)
-				    (graphics-queue-count 1)
-				    (compute-queue-count 0)
-				    (transfer-queue-count 0)
-				    (sparse-binding-queue-count 0)
-				    (rectangular-lines nil)
-				    (bresenham-lines nil)
-				    (smooth-lines nil)
-				    (stippled-lines nil)
-				    (enable-robust-buffer-access nil)
-				    (enable-full-draw-index-uint32 nil)
-				    (enable-image-cube-array nil)
-				    (enable-independent-blend nil)
-				    (enable-geometry-shader nil)
-				    (enable-tessellation-shader nil)
-				    (enable-sample-rate-shading nil)
-				    (enable-dual-src-blend nil)
-				    (enable-logic-op nil)
-				    (enable-multi-draw-indirect nil)
-				    (enable-draw-indirect-first-instance nil)
-				    (enable-depth-clamp #-swiftshader t #+swiftshader nil)
-				    (enable-depth-bias-clamp nil)
-				    (enable-fill-mode-non-solid nil)
-				    (enable-depth-bounds nil)
-				    (enable-wide-lines nil)
-				    (enable-large-points t)
-				    (enable-alpha-to-one nil)
-				    (enable-multi-viewport nil)
-				    (enable-sampler-anisotropy nil)
-				    (enable-texture-compression-etc2 nil)
-				    (enable-texture-compression-astc-ldr nil)
-				    (enable-texture-compression-bc nil)
-				    (enable-occlusion-query-precise nil)
-				    (enable-pipeline-statistics-query nil)
-				    (enable-vertex-pipeline-stores-and-atomics nil)
-				    (enable-fragment-stores-and-atomics nil)
-				    (enable-shader-tessellation-and-geometry-point-size nil)
-				    (enable-shader-image-gather-extended nil)
-				    (enable-shader-storage-image-extended-formats nil)
-				    (enable-shader-storage-image-multisample nil)
-				    (enable-shader-storage-image-read-without-format nil)
-				    (enable-shader-storage-image-write-without-format nil)
-				    (enable-shader-uniform-buffer-array-dynamic-indexing nil)
-				    (enable-shader-sampled-image-array-dynamic-indexing nil)
-				    (enable-shader-storage-buffer-array-dynamic-indexing nil)
-				    (enable-shader-storage-image-array-dynamic-indexing nil)
-				    (enable-shader-clip-distance nil)
-				    (enable-shader-cull-distance nil)
-				    (enable-shader-float64 nil)
-				    (enable-shader-int64 nil)
-				    (enable-shader-int16 nil)
-				    (enable-shader-resource-residency nil)
-				    (enable-shader-resource-min-lod nil)
-				    (enable-sparse-binding nil)
-				    (enable-sparse-residency-buffer nil)
-				    (enable-sparse-residency-image-2D nil)
-				    (enable-sparse-residency-image-3D nil)
-				    (enable-sparse-residency2-samples nil)
-				    (enable-sparse-residency4-samples nil)
-				    (enable-sparse-residency8-samples nil)
-				    (enable-sparse-residency16-samples nil)
-				    (enable-sparse-residency-aliased nil)
-				    (enable-variable-multisample-rate nil)
-				    (enable-inherited-queries nil)
-			      &aux line-rasterization)
+				                    (allocator +null-allocator+)
+				                    (graphics-queue-count 1)
+				                    (compute-queue-count 0)
+				                    (transfer-queue-count 0)
+				                    (sparse-binding-queue-count 0)
+				                    (rectangular-lines nil)
+				                    (bresenham-lines nil)
+				                    (smooth-lines nil)
+				                    (stippled-lines nil)
+				                    (enable-robust-buffer-access nil)
+				                    (enable-full-draw-index-uint32 nil)
+				                    (enable-image-cube-array nil)
+				                    (enable-independent-blend nil)
+				                    (enable-geometry-shader nil)
+				                    (enable-tessellation-shader nil)
+				                    (enable-sample-rate-shading nil)
+				                    (enable-dual-src-blend nil)
+				                    (enable-logic-op nil)
+				                    (enable-multi-draw-indirect nil)
+				                    (enable-draw-indirect-first-instance nil)
+				                    (enable-depth-clamp #-swiftshader t #+swiftshader nil)
+				                    (enable-depth-bias-clamp nil)
+				                    (enable-fill-mode-non-solid nil)
+				                    (enable-depth-bounds nil)
+				                    (enable-wide-lines nil)
+				                    (enable-large-points t)
+				                    (enable-alpha-to-one nil)
+				                    (enable-multi-viewport nil)
+				                    (enable-sampler-anisotropy nil)
+				                    (enable-texture-compression-etc2 nil)
+				                    (enable-texture-compression-astc-ldr nil)
+				                    (enable-texture-compression-bc nil)
+				                    (enable-occlusion-query-precise nil)
+				                    (enable-pipeline-statistics-query nil)
+				                    (enable-vertex-pipeline-stores-and-atomics nil)
+				                    (enable-fragment-stores-and-atomics nil)
+				                    (enable-shader-tessellation-and-geometry-point-size nil)
+				                    (enable-shader-image-gather-extended nil)
+				                    (enable-shader-storage-image-extended-formats nil)
+				                    (enable-shader-storage-image-multisample nil)
+				                    (enable-shader-storage-image-read-without-format nil)
+				                    (enable-shader-storage-image-write-without-format nil)
+				                    (enable-shader-uniform-buffer-array-dynamic-indexing nil)
+				                    (enable-shader-sampled-image-array-dynamic-indexing nil)
+				                    (enable-shader-storage-buffer-array-dynamic-indexing nil)
+				                    (enable-shader-storage-image-array-dynamic-indexing nil)
+				                    (enable-shader-clip-distance nil)
+				                    (enable-shader-cull-distance nil)
+				                    (enable-shader-float64 nil)
+				                    (enable-shader-int64 nil)
+				                    (enable-shader-int16 nil)
+				                    (enable-shader-resource-residency nil)
+				                    (enable-shader-resource-min-lod nil)
+				                    (enable-sparse-binding nil)
+				                    (enable-sparse-residency-buffer nil)
+				                    (enable-sparse-residency-image-2D nil)
+				                    (enable-sparse-residency-image-3D nil)
+				                    (enable-sparse-residency2-samples nil)
+				                    (enable-sparse-residency4-samples nil)
+				                    (enable-sparse-residency8-samples nil)
+				                    (enable-sparse-residency16-samples nil)
+				                    (enable-sparse-residency-aliased nil)
+				                    (enable-variable-multisample-rate nil)
+				                    (enable-inherited-queries nil)
+			                  &aux line-rasterization)
   (when (or rectangular-lines bresenham-lines smooth-lines stippled-lines)
     (warn "Physical device ~S may not have feature lineRasterization." gpu)
     (setq line-rasterization t))
@@ -145,7 +145,7 @@
   (when (and enable-fragment-stores-and-atomics (not (has-fragment-stores-and-atomics-p gpu)))
     (warn "Physical Device ~S does not support feature fragmentStoresAndAtomics." gpu))
   (when (and enable-shader-tessellation-and-geometry-point-size
-	     (not (has-shader-tessellation-and-geometry-point-size-p gpu)))
+	         (not (has-shader-tessellation-and-geometry-point-size-p gpu)))
     (warn "Physical Device ~S does not support feature shaderTessellationAndGeometryPointSize." gpu))
   (when (and enable-shader-image-gather-extended (not (has-shader-image-gather-extended-p gpu)))
     (warn "Physical Device ~S does not support feature shaderImageGatherExtended." gpu))
@@ -154,22 +154,22 @@
   (when (and enable-shader-storage-image-multisample (not (has-shader-storage-image-multisample-p gpu)))
     (warn "Physical Device ~S does not support feature shaderStorageImageMultisample." gpu))
   (when (and enable-shader-storage-image-read-without-format
-	     (not (has-shader-storage-image-read-without-format-p gpu)))
+	         (not (has-shader-storage-image-read-without-format-p gpu)))
     (warn "Physical Device ~S does not support feature shaderStorageImageReadWithoutFormat." gpu))
   (when (and enable-shader-storage-image-write-without-format
-	     (not (has-shader-storage-image-write-without-format-p gpu)))
+	         (not (has-shader-storage-image-write-without-format-p gpu)))
     (warn "Physical Device ~S does not support feature shaderStorageImageWriteWithoutFormat." gpu))
   (when (and enable-shader-uniform-buffer-array-dynamic-indexing
-	     (not (has-shader-uniform-buffer-array-dynamic-indexing-p gpu)))
+	         (not (has-shader-uniform-buffer-array-dynamic-indexing-p gpu)))
     (warn "Physical Device ~S does not support feature shaderUniformBufferArrayDynamicIndexing." gpu))
   (when (and enable-shader-sampled-image-array-dynamic-indexing
-	     (not (has-shader-sampled-image-array-dynamic-indexing-p gpu)))
+	         (not (has-shader-sampled-image-array-dynamic-indexing-p gpu)))
     (warn "Physical Device ~S does not support feature shaderSampledImageArrayDynamicIndexing." gpu))
   (when (and enable-shader-storage-buffer-array-dynamic-indexing
-	     (not (has-shader-storage-buffer-array-dynamic-indexing-p gpu)))
+	         (not (has-shader-storage-buffer-array-dynamic-indexing-p gpu)))
     (warn "Physical Device ~S does not support feature shaderStorageBufferArrayDynamicIndexing." gpu))
   (when (and enable-shader-storage-image-array-dynamic-indexing
-	     (not (has-shader-storage-image-array-dynamic-indexing-p gpu)))
+	         (not (has-shader-storage-image-array-dynamic-indexing-p gpu)))
     (warn "Physical Device ~S does not support feature shaderStorageImageArrayDynamicIndexing." gpu))
   (when (and enable-shader-clip-distance (not (has-shader-clip-distance-p gpu)))
     (warn "Physical Device ~S does not support feature shaderClipDistance." gpu))
@@ -209,8 +209,8 @@
     (warn "Physical Device ~S does not support feature inheritedQueries." gpu))
   (with-vk-struct (p-features VkPhysicalDeviceFeatures)
     (flet ((features-slot (slot-name slot-value)
-	     (setf (foreign-slot-value p-features '(:struct VkPhysicalDeviceFeatures) slot-name)
-		   (if (or (not slot-value) (and (integerp slot-value) (zerop slot-value))) VK_FALSE VK_TRUE))))
+	         (setf (foreign-slot-value p-features '(:struct VkPhysicalDeviceFeatures) slot-name)
+		           (if (or (not slot-value) (and (integerp slot-value) (zerop slot-value))) VK_FALSE VK_TRUE))))
       (features-slot '%vk::robustBufferAccess enable-robust-buffer-access)
       (features-slot '%vk::fullDrawIndexUint32 enable-full-draw-index-uint32)
       (features-slot '%vk::imageCubeArray enable-image-cube-array)
@@ -267,152 +267,152 @@
       (features-slot '%vk::inheritedQueries enable-inherited-queries))
     (let ((device-extension-count (length device-extensions)))
       (with-foreign-object (p-device-extensions :pointer device-extension-count)
-	(unwind-protect
+	    (unwind-protect
 
-	     (progn
-	       (loop for i from 0 for extension in device-extensions
-		  do (setf (mem-aref p-device-extensions :pointer i) (foreign-string-alloc extension)))
-	       ;; todo: as it becomes clearer how multiple queues are used in Vulkan,
-	       ;; rework and simplify this section of create-device
-	       (labels ((dedicated? (desired-flag queue-family)
-			  (eq desired-flag (queue-flags queue-family)))
-			(supports? (desired-flag queue-family)
-			  (not (zerop (logand (queue-flags queue-family) desired-flag))))
-			(find-best (desired-flag desired-count)
-			  (let ((dedicated-index (search (list desired-flag) (queue-families gpu)
-							 :test #'(lambda (desired-flag queue-family)
-								   (and (dedicated? desired-flag queue-family)
-									(>= (queue-count queue-family) desired-count)))))
-				(multipurpose-index (search (list desired-flag) (queue-families gpu)
-							    :test #'(lambda (desired-flag queue-family)
-								      (and (supports? desired-flag queue-family)
-									   (>= (queue-count queue-family) desired-count))))))
-			    (if dedicated-index
-				(list dedicated-index desired-count :dedicated)
-				(if multipurpose-index
-				    (list multipurpose-index desired-count :multipurpose))))))
+	         (progn
+	           (loop for i from 0 for extension in device-extensions
+		             do (setf (mem-aref p-device-extensions :pointer i) (foreign-string-alloc extension)))
+               ;; todo: as it becomes clearer how multiple queues are used in Vulkan,
+               ;; rework and simplify this section of create-device
+	           (labels ((dedicated? (desired-flag queue-family)
+			              (eq desired-flag (queue-flags queue-family)))
+			            (supports? (desired-flag queue-family)
+			              (not (zerop (logand (queue-flags queue-family) desired-flag))))
+			            (find-best (desired-flag desired-count)
+			              (let ((dedicated-index (search (list desired-flag) (queue-families gpu)
+							                             :test #'(lambda (desired-flag queue-family)
+								                                   (and (dedicated? desired-flag queue-family)
+									                                    (>= (queue-count queue-family) desired-count)))))
+				                (multipurpose-index (search (list desired-flag) (queue-families gpu)
+							                                :test #'(lambda (desired-flag queue-family)
+								                                      (and (supports? desired-flag queue-family)
+									                                       (>= (queue-count queue-family) desired-count))))))
+			                (if dedicated-index
+				                (list dedicated-index desired-count :dedicated)
+				                (if multipurpose-index
+				                    (list multipurpose-index desired-count :multipurpose))))))
 				
-		 (let* ((graphics-queue-family-index
-			 (when (> graphics-queue-count 0) (find-best VK_QUEUE_GRAPHICS_BIT graphics-queue-count)))
+		         (let* ((graphics-queue-family-index
+			              (when (> graphics-queue-count 0) (find-best VK_QUEUE_GRAPHICS_BIT graphics-queue-count)))
 			
-			(compute-queue-family-index
-			 (when (> compute-queue-count 0) (find-best VK_QUEUE_COMPUTE_BIT compute-queue-count)))
+			            (compute-queue-family-index
+			              (when (> compute-queue-count 0) (find-best VK_QUEUE_COMPUTE_BIT compute-queue-count)))
 			
-			(transfer-queue-family-index
-			 (when (> transfer-queue-count 0) (find-best VK_QUEUE_TRANSFER_BIT transfer-queue-count)))
+			            (transfer-queue-family-index
+			              (when (> transfer-queue-count 0) (find-best VK_QUEUE_TRANSFER_BIT transfer-queue-count)))
 			
-			(sparse-binding-queue-family-index
-			 (when (> sparse-binding-queue-count 0) (find-best VK_QUEUE_SPARSE_BINDING_BIT
-									   sparse-binding-queue-count)))
-			(queue-indices-and-totals
-			 (loop for entry in (list graphics-queue-family-index
-						  compute-queue-family-index
-						  transfer-queue-family-index
-						  sparse-binding-queue-family-index)
-			    with result = (list :result)
-			    ;; why do I feel like there is a simple map reduce way of solving this!
-			    do (when entry
-				 (let ((result-entry (assoc (first entry) (cdr result))))
-				   (if (not result-entry)
-				       (push (list (first entry) (second entry) (third entry)) (cdr result))
-				       (setf (second result-entry) (+ (second entry) (second result-entry))))))
-			    finally (return
-				      (mapcar #'(lambda (entry)
-						  (when entry
-						    (let ((count (queue-count (elt (queue-families gpu) (car entry)))))
-						      (when (> (cadr entry) count)
-							(error "Not enough queues available at queue index ~a" (car entry))))
-						    entry))
-					      (cdr result))))))
+			            (sparse-binding-queue-family-index
+			              (when (> sparse-binding-queue-count 0) (find-best VK_QUEUE_SPARSE_BINDING_BIT
+									                                        sparse-binding-queue-count)))
+			            (queue-indices-and-totals
+			              (loop for entry in (list graphics-queue-family-index
+						                           compute-queue-family-index
+						                           transfer-queue-family-index
+						                           sparse-binding-queue-family-index)
+			                    with result = (list :result)
+                                ;; why do I feel like there is a simple map reduce way of solving this!
+			                    do (when entry
+				                     (let ((result-entry (assoc (first entry) (cdr result))))
+				                       (if (not result-entry)
+				                           (push (list (first entry) (second entry) (third entry)) (cdr result))
+				                           (setf (second result-entry) (+ (second entry) (second result-entry))))))
+			                    finally (return
+				                          (mapcar #'(lambda (entry)
+						                              (when entry
+						                                (let ((count (queue-count (elt (queue-families gpu) (car entry)))))
+						                                  (when (> (cadr entry) count)
+							                                (error "Not enough queues available at queue index ~a" (car entry))))
+						                                entry))
+					                              (cdr result))))))
 
-		   (with-foreign-object (p-queue-infos '(:struct VkDeviceQueueCreateInfo)
-						       (length queue-indices-and-totals))
-		     (let ((allocs nil))
-		       (unwind-protect
-			    (progn
-			      (loop for queue in queue-indices-and-totals
-				 for x from 0
-				 do (zero-struct (mem-aptr p-queue-infos '(:struct VkDeviceQueueCreateInfo) x)
-						 '(:struct VkDeviceQueueCreateInfo))
-				   (let ((p-queue-priorities (foreign-alloc :float :count (cadr queue))))
-				     (push p-queue-priorities allocs)
-				     (loop for i from 0 below (cadr queue)
-					do (setf (mem-aref p-queue-priorities :float i) 1.0f0))
-				     (with-foreign-slots ((%vk::sType
-							   %vk::queueFamilyIndex
-							   %vk::queueCount
-							   %vk::pQueuePriorities)
-							  (mem-aptr p-queue-infos '(:struct VkDeviceQueueCreateInfo) x)
-							  (:struct VkDeviceQueueCreateInfo))
-				       (setf %vk::sType VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO
-					     %vk::queueFamilyIndex (car queue)
-					     %vk::queueCount (cadr queue)
-					     %vk::pQueuePriorities p-queue-priorities))))
+		           (with-foreign-object (p-queue-infos '(:struct VkDeviceQueueCreateInfo)
+						                               (length queue-indices-and-totals))
+		             (let ((allocs nil))
+		               (unwind-protect
+			                (progn
+			                  (loop for queue in queue-indices-and-totals
+				                    for x from 0
+				                    do (zero-struct (mem-aptr p-queue-infos '(:struct VkDeviceQueueCreateInfo) x)
+						                            '(:struct VkDeviceQueueCreateInfo))
+				                       (let ((p-queue-priorities (foreign-alloc :float :count (cadr queue))))
+				                         (push p-queue-priorities allocs)
+				                         (loop for i from 0 below (cadr queue)
+					                           do (setf (mem-aref p-queue-priorities :float i) 1.0f0))
+				                         (with-foreign-slots ((%vk::sType
+							                                   %vk::queueFamilyIndex
+							                                   %vk::queueCount
+							                                   %vk::pQueuePriorities)
+							                                  (mem-aptr p-queue-infos '(:struct VkDeviceQueueCreateInfo) x)
+							                                  (:struct VkDeviceQueueCreateInfo))
+				                           (setf %vk::sType VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO
+					                             %vk::queueFamilyIndex (car queue)
+					                             %vk::queueCount (cadr queue)
+					                             %vk::pQueuePriorities p-queue-priorities))))
 			    
-			      (with-vk-struct (p-create-info VkDeviceCreateInfo)
-				(let ((p-lr-features
-				       (if line-rasterization
-					   (foreign-alloc
-					    '(:struct %vk::VkPhysicalDeviceLineRasterizationFeaturesEXT))
-					   +nullptr+)))
-				  (when line-rasterization
-				    (push p-lr-features allocs)
-				    (zero-struct
-				     p-lr-features
-				     '(:struct %vk::VkPhysicalDeviceLineRasterizationFeaturesEXT))
-				    (setf (foreign-slot-value
-					   p-lr-features
-					   '(:struct %vk::VkPhysicalDeviceLineRasterizationFeaturesEXT)
-					   '%vk::sType)
-					  %vk::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT)
-				    (fill-physical-device-line-rasterization-features-ext
-				     p-lr-features
-				     :rectangular-lines (if rectangular-lines VK_TRUE VK_FALSE)
-				     :bresenham-lines (if bresenham-lines VK_TRUE VK_FALSE)
-				     :smooth-lines (if smooth-lines VK_TRUE VK_FALSE)
+			                  (with-vk-struct (p-create-info VkDeviceCreateInfo)
+				                (let ((p-lr-features
+				                        (if line-rasterization
+					                        (foreign-alloc
+					                         '(:struct %vk::VkPhysicalDeviceLineRasterizationFeaturesEXT))
+					                        +nullptr+)))
+				                  (when line-rasterization
+				                    (push p-lr-features allocs)
+				                    (zero-struct
+				                     p-lr-features
+				                     '(:struct %vk::VkPhysicalDeviceLineRasterizationFeaturesEXT))
+				                    (setf (foreign-slot-value
+					                       p-lr-features
+					                       '(:struct %vk::VkPhysicalDeviceLineRasterizationFeaturesEXT)
+					                       '%vk::sType)
+					                      %vk::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT)
+				                    (fill-physical-device-line-rasterization-features-ext
+				                     p-lr-features
+				                     :rectangular-lines (if rectangular-lines VK_TRUE VK_FALSE)
+				                     :bresenham-lines (if bresenham-lines VK_TRUE VK_FALSE)
+				                     :smooth-lines (if smooth-lines VK_TRUE VK_FALSE)
 
-				     :stippled-rectangular-lines
-				     (if (and stippled-lines rectangular-lines) VK_TRUE VK_FALSE)
-				     :stippled-bresenham-lines
-				     (if (and stippled-lines bresenham-lines) VK_TRUE VK_FALSE)
-				     :stippled-smooth-lines
-				     (if (and stippled-lines smooth-lines) VK_TRUE VK_FALSE)))
+				                     :stippled-rectangular-lines
+				                     (if (and stippled-lines rectangular-lines) VK_TRUE VK_FALSE)
+				                     :stippled-bresenham-lines
+				                     (if (and stippled-lines bresenham-lines) VK_TRUE VK_FALSE)
+				                     :stippled-smooth-lines
+				                     (if (and stippled-lines smooth-lines) VK_TRUE VK_FALSE)))
 	
-				  (with-foreign-slots ((%vk::pNext
-							%vk::queueCreateInfoCount
-						      %vk::pQueueCreateInfos
-						      %vk::enabledExtensionCount
-						      %vk::ppEnabledExtensionNames
-						      %vk::pEnabledFeatures)
-						     p-create-info
-						     (:struct VkDeviceCreateInfo))
-				    (setf %vk::pNext p-lr-features
-					  %vk::pEnabledFeatures p-features
-					%vk::pQueueCreateInfos p-queue-infos
-					%vk::queueCreateInfoCount (length queue-indices-and-totals)
-					%vk::ppEnabledExtensionNames p-device-extensions
-					%vk::enabledExtensionCount device-extension-count))
-				  (with-foreign-object (p-device 'VkDevice)
-				    (check-vk-result (vkCreateDevice (h gpu) p-create-info (h allocator) p-device))
-				    (let ((device (make-instance 'sgpu-device ;; todo put queue objects in device slots!
-								 :handle (mem-aref p-device 'VkDevice)
-								 :instance (instance gpu)
-								 :physical-device gpu
-								 :allocator allocator)))
-				      (push device (logical-devices (instance gpu)))
-				      (loop for queue in queue-indices-and-totals
-					 do
-					   (push (list (first queue)
-						       (loop for i from 0 below (second queue)
-							  collect
-							    (get-device-queue device (first queue) i (third queue))))
-						 (device-queues device)))
-				      device)))))
+				                  (with-foreign-slots ((%vk::pNext
+							                            %vk::queueCreateInfoCount
+						                                %vk::pQueueCreateInfos
+						                                %vk::enabledExtensionCount
+						                                %vk::ppEnabledExtensionNames
+						                                %vk::pEnabledFeatures)
+						                               p-create-info
+						                               (:struct VkDeviceCreateInfo))
+				                    (setf %vk::pNext p-lr-features
+					                      %vk::pEnabledFeatures p-features
+					                      %vk::pQueueCreateInfos p-queue-infos
+					                      %vk::queueCreateInfoCount (length queue-indices-and-totals)
+					                      %vk::ppEnabledExtensionNames p-device-extensions
+					                      %vk::enabledExtensionCount device-extension-count))
+				                  (with-foreign-object (p-device 'VkDevice)
+				                    (check-vk-result (vkCreateDevice (h gpu) p-create-info (h allocator) p-device))
+				                    (let ((device (make-instance 'sgpu-device ;; todo put queue objects in device slots!
+								                                 :handle (mem-aref p-device 'VkDevice)
+								                                 :instance (instance gpu)
+								                                 :physical-device gpu
+								                                 :allocator allocator)))
+				                      (push device (logical-devices (instance gpu)))
+				                      (loop for queue in queue-indices-and-totals
+					                        do
+					                           (push (list (first queue)
+						                                   (loop for i from 0 below (second queue)
+							                                     collect
+							                                     (get-device-queue device (first queue) i (third queue))))
+						                             (device-queues device)))
+				                      device)))))
 
-			 (loop for pointer in allocs do (foreign-free pointer))))))))
+			             (loop for pointer in allocs do (foreign-free pointer))))))))
 		 
-	  (loop for i from 0 below device-extension-count
-	     do (foreign-string-free (mem-aref p-device-extensions :pointer i))))))))
+	      (loop for i from 0 below device-extension-count
+	            do (foreign-string-free (mem-aref p-device-extensions :pointer i))))))))
 
 (defun begin-single-time-commands (device command-pool)
   (with-vk-struct (p-alloc-info VkCommandBufferAllocateInfo)

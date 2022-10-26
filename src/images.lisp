@@ -21,85 +21,75 @@
 
 (in-package :vk)
 
-(defun get-swapchain-images-khr (swapchain)
-  (with-foreign-object (p-back-buffer-count :uint32)
-    (check-vk-result (vkGetSwapchainImagesKHR (h (device swapchain)) (h swapchain) p-back-buffer-count +nullptr+))
-    (setf (number-of-images swapchain) (mem-aref p-back-buffer-count :uint32))
-    (with-foreign-object (p-back-buffers 'VkImage (mem-aref p-back-buffer-count :uint32))
-      (check-vk-result (vkGetSwapchainImagesKHR (h (device swapchain)) (h swapchain) p-back-buffer-count p-back-buffers))
-      (let* ((count (mem-aref p-back-buffer-count :uint32))
-	     (images (make-array count)))
-	(loop for i from 0 below count
-	   do (setf (elt images i) (make-instance 'image :handle (mem-aref p-back-buffers 'VkImage i))))
-	images))))
+
 
 (defun create-image (device width height &key (allocator +null-allocator+)
-					   (image-class 'image)
-					   (format VK_FORMAT_R8G8B8A8_UNORM)
-					   (tiling VK_IMAGE_TILING_OPTIMAL)
-					   (usage (logior VK_IMAGE_USAGE_SAMPLED_BIT
-							  VK_IMAGE_USAGE_TRANSFER_DST_BIT))
-					   (memory-properties VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
+					                       (image-class 'image)
+					                       (format VK_FORMAT_R8G8B8A8_UNORM)
+					                       (tiling VK_IMAGE_TILING_OPTIMAL)
+					                       (usage (logior VK_IMAGE_USAGE_SAMPLED_BIT
+							                              VK_IMAGE_USAGE_TRANSFER_DST_BIT))
+					                       (memory-properties VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
   (with-vk-struct (p-info VkImageCreateInfo)
     (with-foreign-slots ((%vk::imageType
-			  %vk::mipLevels
-			  %vk::arrayLayers
-			  %vk::format
-			  %vk::tiling
-			  %vk::initialLayout
-			  %vk::usage
-			  %vk::samples
-			  %vk::sharingMode)
-			 p-info (:struct VkImageCreateInfo))
+			              %vk::mipLevels
+			              %vk::arrayLayers
+			              %vk::format
+			              %vk::tiling
+			              %vk::initialLayout
+			              %vk::usage
+			              %vk::samples
+			              %vk::sharingMode)
+			             p-info (:struct VkImageCreateInfo))
       (setf %vk::imageType VK_IMAGE_TYPE_2D
-	    %vk::format format
-	    %vk::mipLevels 1
-	    %vk::arrayLayers 1
-	    %vk::samples VK_SAMPLE_COUNT_1_BIT
-	    %vk::tiling tiling
-	    %vk::usage usage
-	    %vk::sharingMode VK_SHARING_MODE_EXCLUSIVE
-	    %vk::initialLayout VK_IMAGE_LAYOUT_UNDEFINED
+	        %vk::format format
+	        %vk::mipLevels 1
+	        %vk::arrayLayers 1
+	        %vk::samples VK_SAMPLE_COUNT_1_BIT
+	        %vk::tiling tiling
+	        %vk::usage usage
+	        %vk::sharingMode VK_SHARING_MODE_EXCLUSIVE
+	        %vk::initialLayout VK_IMAGE_LAYOUT_UNDEFINED
 
-	    (foreign-slot-value
-	     (foreign-slot-pointer p-info '(:struct VkImageCreateInfo) '%vk::extent)
-	     '(:struct VkExtent3D) '%vk::width) width
+	        (foreign-slot-value
+	         (foreign-slot-pointer p-info '(:struct VkImageCreateInfo) '%vk::extent)
+	         '(:struct VkExtent3D) '%vk::width) width
 
-	     (foreign-slot-value
-	     (foreign-slot-pointer p-info '(:struct VkImageCreateInfo) '%vk::extent)
-	     '(:struct VkExtent3D) '%vk::height) height
+	        (foreign-slot-value
+	         (foreign-slot-pointer p-info '(:struct VkImageCreateInfo) '%vk::extent)
+	         '(:struct VkExtent3D) '%vk::height) height
 
-	     (foreign-slot-value
-	      (foreign-slot-pointer p-info '(:struct VkImageCreateInfo) '%vk::extent)
-	      '(:struct VkExtent3D) '%vk::depth) 1)
+	        (foreign-slot-value
+	         (foreign-slot-pointer p-info '(:struct VkImageCreateInfo) '%vk::extent)
+	         '(:struct VkExtent3D) '%vk::depth) 1)
 
       (with-foreign-object (p-image 'VkImage)
-	(check-vk-result (vkCreateImage (h device) p-info (h allocator) p-image))
-	(with-vk-struct (p-req VkMemoryRequirements)
-	  (vkGetImageMemoryRequirements (h device) (mem-aref p-image 'VkImage) p-req)
-	  (with-vk-struct (p-alloc-info VkMemoryAllocateInfo)
-	    (with-foreign-slots ((%vk::size
-				  %vk::memoryTypeBits)
-				 p-req
-				 (:struct VkMemoryRequirements))
-	      (with-foreign-slots ((%vk::allocationSize
-				    %vk::memoryTypeIndex)
-				   p-alloc-info
-				   (:struct VkMemoryAllocateInfo))
-		(setf %vk::allocationSize %vk::size
-		      %vk::memoryTypeIndex (find-memory-type (physical-device device)
-							    %vk::memoryTypeBits
-							    memory-properties))))
-	    (with-foreign-object (p-memory 'VkDeviceMemory)
-	      (check-vk-result (vkAllocateMemory (h device) p-alloc-info (h allocator) p-memory))
-	      (vkBindImageMemory (h device) (mem-aref p-image 'VkImage) (mem-aref p-memory 'VkDeviceMemory) 0)
-	      (make-instance image-class 
-			     :handle (mem-aref p-image 'VkImage)
-			     :memory (make-instance 'allocated-memory
-						    :handle (mem-aref p-memory 'VkDeviceMemory)
-						    :device device
-						    :allocator allocator)
-			     :device device :allocator allocator))))))))
+	    (check-vk-result (vkCreateImage (h device) p-info (h allocator) p-image))
+	    (with-vk-struct (p-req VkMemoryRequirements)
+	      (vkGetImageMemoryRequirements (h device) (mem-aref p-image 'VkImage) p-req)
+	      (with-vk-struct (p-alloc-info VkMemoryAllocateInfo)
+	        (with-foreign-slots ((%vk::size
+				                  %vk::memoryTypeBits)
+				                 p-req
+				                 (:struct VkMemoryRequirements))
+	          (with-foreign-slots ((%vk::allocationSize
+				                    %vk::memoryTypeIndex)
+				                   p-alloc-info
+				                   (:struct VkMemoryAllocateInfo))
+		        (setf %vk::allocationSize %vk::size
+		              %vk::memoryTypeIndex (find-memory-type (physical-device device)
+							                                 %vk::memoryTypeBits
+							                                 memory-properties))))
+	        (with-foreign-object (p-memory 'VkDeviceMemory)
+	          (check-vk-result (vkAllocateMemory (h device) p-alloc-info (h allocator) p-memory))
+	          (vkBindImageMemory (h device) (mem-aref p-image 'VkImage) (mem-aref p-memory 'VkDeviceMemory) 0)
+	          (make-instance image-class
+			                 :handle (mem-aref p-image 'VkImage)
+			                 :memory (make-instance 'allocated-memory
+						                            :handle (mem-aref p-memory 'VkDeviceMemory)
+						                            :device device
+						                            :allocator allocator)
+			                 :device device :allocator allocator))))))))
 
 (defun create-depth-image (device width height &key (allocator +null-allocator+)
 						 (format (find-supported-depth-format

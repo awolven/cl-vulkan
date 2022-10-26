@@ -73,13 +73,13 @@
 
 (defun create-vulkan-window (app device title width height)
   (let* ((window (create-window app :width width :height height :title title))
-	 (surface (create-window-surface (vulkan-instance app) window))
-	 (gpu (physical-device device))
-	 (index (get-queue-family-index-with-wsi-support gpu surface)))
+	       (surface (create-window-surface (vulkan-instance app) window))
+	       (gpu (physical-device device))
+	       (index (get-queue-family-index-with-wsi-support gpu surface)))
     (initialize-window-surface surface gpu index)
     (let* ((surface-format (find-supported-format surface))
-	   (present-mode VK_PRESENT_MODE_FIFO_KHR #+NOTYET(get-physical-device-surface-present-mode gpu surface))
-	   (swapchain (create-swapchain device window width height surface-format present-mode)))
+           (present-mode (get-physical-device-surface-present-mode gpu surface))
+	         (swapchain (create-swapchain device window width height surface-format present-mode)))
       
       (setup-framebuffers device (render-pass swapchain) swapchain)
       

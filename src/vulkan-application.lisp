@@ -58,9 +58,9 @@
 					                              &rest initargs &key &allow-other-keys)
   (setq *app* instance)
   (apply #'setup-vulkan instance initargs)
-  (initialize-small-host-visible-memory-pool instance)
-  (initialize-large-host-visible-memory-pool instance)
-  (initialize-large-device-local-memory-pool instance)
+  ;;(initialize-small-host-visible-memory-pool instance)
+  ;;(initialize-large-host-visible-memory-pool instance)
+  ;;(initialize-large-device-local-memory-pool instance)
   (values))
 
 (defmethod initialize-instance :after ((instance vulkan-application-mixin)

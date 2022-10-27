@@ -463,12 +463,12 @@
 	    (mem-aref p-blend-constants :float 3) blend-constant-a)))
   (values))
 
-(defparameter *shader-entry-name* (cffi:foreign-string-alloc "main"))
+(defun shader-entry-name () (cffi:foreign-string-alloc "main"))
 
 (defun fill-pipeline-shader-stage-create-info (p-info &key
 							stage
 							module
-							(p-name *shader-entry-name*)
+							(p-name (shader-entry-name))
 							&allow-other-keys)
   (%vk::zero-struct p-info '(:struct VkPipelineShaderStageCreateInfo))
   (with-foreign-slots ((%vk::sType %vk::pNext %vk::flags %vk::stage %vk::module %vk::pName)

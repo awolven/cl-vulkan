@@ -238,139 +238,138 @@
 (defun frame-begin (swapchain render-pass current-frame clear-value command-pool)
   (declare (ignore command-pool))
   (let* ((device (device swapchain))
-	     (frame-resource (elt (frame-resources swapchain) current-frame))
-	     (command-buffer (frame-command-buffer frame-resource))
-	     (fence (fence frame-resource))
-	     (present-complete-sem (present-complete-semaphore frame-resource))
-	     (image-index))
+	 (frame-resource (elt (frame-resources swapchain) current-frame))
+	 (command-buffer (frame-command-buffer frame-resource))
+	 (fence (fence frame-resource))
+	 (present-complete-sem (present-complete-semaphore frame-resource))
+	 (image-index))
 
     (with-foreign-object (p-fence 'VkFence)
       (setf (mem-aref p-fence 'VkFence) (h fence))
       
-	  (tagbody
+      (tagbody
 
-	   continue
-
-	     (let ((result (vkWaitForFences (h device) 1 p-fence VK_TRUE 100)))
+       continue
+	 (let ((result (vkWaitForFences (h device) 1 p-fence VK_TRUE 100)))
            ;; probably can set wait time to uint32 max and eliminate this tagbody
-	       (when (eq result VK_SUCCESS)
-	         (go break))
-	       (when (eq result VK_TIMEOUT)
-	         (go continue))
-	       (check-vk-result result))
+	   (when (eq result VK_SUCCESS)
+	     (go break))
+	   (when (eq result VK_TIMEOUT)
+	     (go continue))
+	   (check-vk-result result))
 
-	   break
+       break
 
          ;;(check-vk-result (vkResetFences (h device) 1 p-fence))
          ;; reset all the command buffers from pool
          ;;(reset-command-pool device command-pool)
-	     ))
+	 ))
 
     (with-foreign-object (p-back-buffer-index :uint32)
-	  (check-vk-result (vkAcquireNextImageKHR (h device)
-						                      (h swapchain)
-						                      UINT64_MAX
-						                      (h present-complete-sem)
-						                      VK_NULL_HANDLE
-						                      p-back-buffer-index))
+      (check-vk-result (vkAcquireNextImageKHR (h device)
+					      (h swapchain)
+					      UINT64_MAX
+					      (h present-complete-sem)
+					      VK_NULL_HANDLE
+					      p-back-buffer-index))
       
-	  (setf image-index (mem-aref p-back-buffer-index :uint32)))
+      (setf image-index (mem-aref p-back-buffer-index :uint32)))
 
     
 	   
     (begin-command-buffer command-buffer)
 
     (with-vk-struct (p-viewports VkViewport)
-	  (with-foreign-slots ((%vk::x
-			                %vk::y
-			                %vk::width
-			                %vk::height
-			                %vk::minDepth
-			                %vk::maxDepth)
-			               p-viewports (:struct VkViewport))
-	    (setf %vk::x 0.0f0
-		      %vk::y 0.0f0
-		      %vk::width (clampf (fb-width swapchain))
-		      %vk::height (clampf (fb-height swapchain))
-		      %vk::minDepth 0.0f0
-		      %vk::maxDepth 1.0f0))
+      (with-foreign-slots ((%vk::x
+			    %vk::y
+			    %vk::width
+			    %vk::height
+			    %vk::minDepth
+			    %vk::maxDepth)
+			   p-viewports (:struct VkViewport))
+	(setf %vk::x 0.0f0
+	      %vk::y 0.0f0
+	      %vk::width (clampf (fb-width swapchain))
+	      %vk::height (clampf (fb-height swapchain))
+	      %vk::minDepth 0.0f0
+	      %vk::maxDepth 1.0f0))
 
-	  (vkCmdSetViewport (h command-buffer) 0 1 p-viewports))
+      (vkCmdSetViewport (h command-buffer) 0 1 p-viewports))
 
     (with-vk-struct (p-scissor VkRect2D)
-	  (setf (foreign-slot-value
-	         (foreign-slot-pointer p-scissor '(:struct VkRect2D) '%vk::offset)
-	         '(:struct VkOffset2D)
-	         '%vk::x) 0
+      (setf (foreign-slot-value
+	     (foreign-slot-pointer p-scissor '(:struct VkRect2D) '%vk::offset)
+	     '(:struct VkOffset2D)
+	     '%vk::x) 0
 	     
-	         (foreign-slot-value
-		      (foreign-slot-pointer p-scissor '(:struct VkRect2D) '%vk::offset)
-		      '(:struct VkOffset2D)
-		      '%vk::y) 0
+	     (foreign-slot-value
+	      (foreign-slot-pointer p-scissor '(:struct VkRect2D) '%vk::offset)
+	      '(:struct VkOffset2D)
+	      '%vk::y) 0
 	      
-	         (foreign-slot-value
-		      (foreign-slot-pointer p-scissor '(:struct VkRect2D) '%vk::extent)
-		      '(:struct VkExtent2D)
-		      '%vk::width) (fb-width swapchain)
+	     (foreign-slot-value
+	      (foreign-slot-pointer p-scissor '(:struct VkRect2D) '%vk::extent)
+	      '(:struct VkExtent2D)
+	      '%vk::width) (fb-width swapchain)
 	       
-	         (foreign-slot-value
-		      (foreign-slot-pointer p-scissor '(:struct VkRect2D) '%vk::extent)
-		      '(:struct VkExtent2D)
-		      '%vk::height) (fb-height swapchain))
+	     (foreign-slot-value
+	      (foreign-slot-pointer p-scissor '(:struct VkRect2D) '%vk::extent)
+	      '(:struct VkExtent2D)
+	      '%vk::height) (fb-height swapchain))
 
-	  (vkCmdSetScissor (h command-buffer) 0 1 p-scissor))
+      (vkCmdSetScissor (h command-buffer) 0 1 p-scissor))
 
     (with-vk-struct (p-info VkRenderPassBeginInfo)
       
-	  (with-foreign-slots ((%vk::renderPass
-			                %vk::framebuffer
-			                %vk::renderArea
-			                %vk::clearValueCount
-			                %vk::pClearValues)
-			               p-info
-			               (:struct VkRenderPassBeginInfo))
+      (with-foreign-slots ((%vk::renderPass
+			    %vk::framebuffer
+			    %vk::renderArea
+			    %vk::clearValueCount
+			    %vk::pClearValues)
+			   p-info
+			   (:struct VkRenderPassBeginInfo))
 
-	    (with-foreign-object (p-clear-values '(:union VkClearValue) 2)
-	      (setf (mem-aref (mem-aptr p-clear-values '(:union VkClearValue) 0) :float 0) (elt clear-value 0)
-		        (mem-aref (mem-aptr p-clear-values '(:union VkClearValue) 0) :float 1) (elt clear-value 1)
-		        (mem-aref (mem-aptr p-clear-values '(:union VkClearValue) 0) :float 2) (elt clear-value 2)
-		        (mem-aref (mem-aptr p-clear-values '(:union VkClearValue) 0) :float 3) (elt clear-value 3)
+	(with-foreign-object (p-clear-values '(:union VkClearValue) 2)
+	  (setf (mem-aref (mem-aptr p-clear-values '(:union VkClearValue) 0) :float 0) (elt clear-value 0)
+		(mem-aref (mem-aptr p-clear-values '(:union VkClearValue) 0) :float 1) (elt clear-value 1)
+		(mem-aref (mem-aptr p-clear-values '(:union VkClearValue) 0) :float 2) (elt clear-value 2)
+		(mem-aref (mem-aptr p-clear-values '(:union VkClearValue) 0) :float 3) (elt clear-value 3)
 
-		        (foreign-slot-value
-		         (foreign-slot-pointer (mem-aptr p-clear-values '(:union VkClearValue) 1)
-					                   '(:union VkClearValue)
-					                   '%vk::depthStencil)
-		         '(:struct VkClearDepthStencilValue)
-		         '%vk::depth) 1.0f0
+		(foreign-slot-value
+		 (foreign-slot-pointer (mem-aptr p-clear-values '(:union VkClearValue) 1)
+				       '(:union VkClearValue)
+				       '%vk::depthStencil)
+		 '(:struct VkClearDepthStencilValue)
+		 '%vk::depth) 1.0f0
 		 
-		        (foreign-slot-value
-		         (foreign-slot-pointer (mem-aptr p-clear-values '(:union VkClearValue) 1)
-					                   '(:union VkClearValue)
-					                   '%vk::depthStencil)
-		         '(:struct VkClearDepthStencilValue)
-		         '%vk::stencil) 0)
+		(foreign-slot-value
+		 (foreign-slot-pointer (mem-aptr p-clear-values '(:union VkClearValue) 1)
+				       '(:union VkClearValue)
+				       '%vk::depthStencil)
+		 '(:struct VkClearDepthStencilValue)
+		 '%vk::stencil) 0)
 
-	      (setf %vk::renderPass (h render-pass)
-		        %vk::framebuffer (h (elt (framebuffers swapchain) image-index))
+	  (setf %vk::renderPass (h render-pass)
+		%vk::framebuffer (h (elt (framebuffers swapchain) image-index))
 
-		        (foreign-slot-value
-		         (foreign-slot-pointer
-		          (foreign-slot-pointer p-info '(:struct VkRenderPassBeginInfo) '%vk::renderArea)
-		          '(:struct VkRect2D) '%vk::extent)
-		         '(:struct VkExtent2D)
-		         '%vk::width) (fb-width swapchain)
+		(foreign-slot-value
+		 (foreign-slot-pointer
+		  (foreign-slot-pointer p-info '(:struct VkRenderPassBeginInfo) '%vk::renderArea)
+		  '(:struct VkRect2D) '%vk::extent)
+		 '(:struct VkExtent2D)
+		 '%vk::width) (fb-width swapchain)
 
-		        (foreign-slot-value
-		         (foreign-slot-pointer
-		          (foreign-slot-pointer p-info '(:struct VkRenderPassBeginInfo) '%vk::renderArea)
-		          '(:struct VkRect2D) '%vk::extent)
-		         '(:struct VkExtent2D)
-		         '%vk::height) (fb-height swapchain)
+		(foreign-slot-value
+		 (foreign-slot-pointer
+		  (foreign-slot-pointer p-info '(:struct VkRenderPassBeginInfo) '%vk::renderArea)
+		  '(:struct VkRect2D) '%vk::extent)
+		 '(:struct VkExtent2D)
+		 '%vk::height) (fb-height swapchain)
 		 		  
-		        %vk::clearValueCount 2
-		        %vk::pClearValues p-clear-values)
+		%vk::clearValueCount 2
+		%vk::pClearValues p-clear-values)
 	  
-	      (vkCmdBeginRenderPass (h command-buffer) p-info VK_SUBPASS_CONTENTS_INLINE))))
+	  (vkCmdBeginRenderPass (h command-buffer) p-info VK_SUBPASS_CONTENTS_INLINE))))
     image-index))
 
 (defun frame-end (swapchain queue current-frame)

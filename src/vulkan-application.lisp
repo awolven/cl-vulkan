@@ -64,7 +64,8 @@
   (values))
 
 (defmethod initialize-instance :after ((instance vulkan-application-mixin)
-				                               &rest initargs &key (title "Vulkan Demo") (width 2560) (height 1440) &allow-other-keys)
+				       &rest initargs &key (title (application-name instance))
+							(width 2560) (height 1440) &allow-other-keys)
   (declare (ignore initargs))
   (setf (main-window instance)
 	      (create-vulkan-window instance (default-logical-device instance) title width height))

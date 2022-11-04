@@ -97,7 +97,7 @@
    (clear-value
     :initform (make-array 4 :element-type 'single-float
 			  :initial-contents (list 0.45f0 0.55f0 0.60f0 1.0f0))
-    :reader clear-value)
+    :accessor clear-value)
    (recreate-swapchain? :initform nil :accessor recreate-swapchain?)
    (new-width :initform nil :accessor new-width)
    (new-height :initform nil :accessor new-height)

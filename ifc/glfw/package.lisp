@@ -21,7 +21,7 @@
 
 (in-package :cl-user)
 
-(defpackage :%glfw
+(defpackage :$glfw
   (:export #:GLFW_VERSION_MAJOR
 	   #:GLFW_VERSION_MINOR
 	   #:GLFW_VERSION_REVISION

@@ -22,7 +22,7 @@
 (in-package :cl-user)
 
 (cl:defpackage :vk
-  (:use :cl :cffi :cffi-sys :%vk :%glfw)
+  (:use :cl :cffi :cffi-sys :%vk :$glfw)
   (:export #:VK_WHOLE_SIZE
 	   #:allocation-callbacks
 	   #:pipeline-cache

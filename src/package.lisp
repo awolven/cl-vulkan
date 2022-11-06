@@ -249,6 +249,7 @@
 	   #:render-surface
 	   #:command-buffers
 	   #:end-command-buffer
+	   #:main
 	   #:h
 	   #:recreate-swapchain?
 	   #:frame-command-buffer

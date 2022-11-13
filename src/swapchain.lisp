@@ -260,9 +260,9 @@
 
        break
 
-         ;;(check-vk-result (vkResetFences (h device) 1 p-fence))
-         ;; reset all the command buffers from pool
-         ;;(reset-command-pool device command-pool)
+         (check-vk-result (vkResetFences (h device) 1 p-fence))
+         (check-vk-result (vkResetCommandBuffer (h command-buffer)
+                                                VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT))
 	 ))
 
     (with-foreign-object (p-back-buffer-index :uint32)

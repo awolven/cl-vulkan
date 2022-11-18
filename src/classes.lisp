@@ -21,6 +21,9 @@
 
 (in-package :vk)
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (require 'sb-concurrency))
+
 (defclass handle-mixin ()
   ((handle :accessor h :initarg :handle)))
 
@@ -909,14 +912,12 @@
    (allocation-callbacks :initform +null-allocator+ :initarg :allocator :reader allocator)
    (window-registry :initform nil :accessor window-registry)
    (main-window :accessor main-window)
-   (large-device-local-memory-pool
-    :accessor large-device-local-memory-pool
+   (deletion-queue :reader application-deletion-queue :initform (sb-concurrency:make-queue :name "deletion-queue"))
+   (vertex-buffer-memory-pool
+    :accessor vertex-buffer-memory-pool
     :initform nil)
-   (large-host-visible-memory-pool
-    :accessor large-host-visible-memory-pool
-    :initform nil)
-   (small-host-visible-memory-pool
-    :accessor small-host-visible-memory-pool
+   (index-buffer-memory-pool
+    :accessor index-buffer-memory-pool
     :initform nil)))
 
 (defclass vulkan-module ()

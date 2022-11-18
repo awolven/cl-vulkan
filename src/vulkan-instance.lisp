@@ -103,7 +103,7 @@
     
     (loop for ext in extension-names
        unless (find ext available-extensions :test #'string=)
-       do (error "extension ~S is not available" ext)))	    
+       do (error "extension ~S is not available" ext)))
 
   (with-foreign-object (p-extensions-count :uint32)
     (when (zerop (glfwInit))
@@ -150,9 +150,9 @@
 		  finally
 		    (setf
 		     (mem-aref pp-enabled-layer-names-with-validation '(:pointer :char) i)
-             #-NVIDIA
-             (foreign-string-alloc "VK_LAYER_KHRONOS_validation")
-             #+NVIDIA
+		     #-NVIDIA
+		     (foreign-string-alloc "VK_LAYER_KHRONOS_validation")
+		     #+NVIDIA
 		     (foreign-string-alloc "VK_LAYER_LUNARG_standard_validation")))
 	       
 	       (with-vk-struct (p-application-info VkApplicationInfo)

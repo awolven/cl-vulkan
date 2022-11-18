@@ -209,7 +209,9 @@ MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
     "VK_NV_extension_156"
     "VK_KHR_extension_157"
     "VK_KHR_extension_158"
-    "VK_EXT_extension_159"))
+    "VK_EXT_extension_159"
+    "VK_KHR_portability_enumeration"
+    "VK_KHR_get_physical_device_properties2"))
 
 (cffi:defctype VkSampleMask :uint32)
 
@@ -1989,6 +1991,8 @@ MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 (cl:defconstant VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR #x40)
 (cl:defconstant VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR #x80)
 (cl:defconstant VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR #x100)
+
+(cl:defconstant VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT #x00000001)
 
 (cffi:defctype VkSwapchainCreateFlagBitsKHR :int)
 

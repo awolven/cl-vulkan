@@ -56,7 +56,11 @@
   (mapcar #'first (enumerate-instance-layer-properties)))
 
 (defun available-extensions ()
-  (mapcar #'first (remove-duplicates (remove-if #'null (mapcar #'enumerate-instance-extension-properties (available-layers))) :test #'equalp)))
+  (let ((list (mapcar #'first (remove-duplicates (remove-if #'null (mapcar #'enumerate-instance-extension-properties (available-layers))) :test #'equalp))))
+    #+darwin (list* "VK_KHR_portability_enumeration"
+		    "VK_KHR_get_physical_device_properties2"
+		    list)
+    #-darwin list))
 
 (defun destroy-vulkan-instance (instance)
   (when instance
@@ -86,6 +90,9 @@
   (let ((available-layers (available-layers))
 	(available-extensions (available-extensions)))
 
+    #+darwin(pushnew "VK_KHR_portability_enumeration" extension-names :test #'string=)
+    #+darwin(pushnew "VK_KHR_get_physical_device_properties2" extension-names :test #'string=)
+    
     (when (and (numberp *debug*) (> *debug* 1)
 	       (find "VK_LAYER_LUNARG_api_dump" available-layers :test #'string=))
       (pushnew "VK_LAYER_LUNARG_api_dump" layer-names :test #'string=))
@@ -172,11 +179,13 @@
 					       %vk::enabledExtensionCount
 					       %vk::ppEnabledExtensionNames
 					       %vk::enabledLayerCount
-					       %vk::ppEnabledLayerNames)
+					       %vk::ppEnabledLayerNames
+					       %vk::flags)
 					      p-create-info
 					      (:struct VkInstanceCreateInfo))
 
 			   (setf %vk::pApplicationInfo p-application-info)
+			   #+darwin(setf %vk::flags %vk::VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT)
 
 			   (flet ((try-create-inst (&key debug validation)
 				    (let ((1+extension-count (1+ extension-count))

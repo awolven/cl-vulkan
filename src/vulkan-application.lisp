@@ -25,11 +25,13 @@
 
 (defmethod shutdown-application (app)
   (let* ((window (main-window app))
-	       (swapchain (swapchain window))
-	       (device (device swapchain))
-	       (queue-family-index (queue-family-index (render-surface window))))
+	 (swapchain (swapchain window))
+	 (device (device swapchain))
+	 (queue-family-index (queue-family-index (render-surface window))))
 
     (device-wait-idle device)
+
+    (destroy-memory-pools app)
 
     (vkDestroyDescriptorPool (h device)
                              vk::VK_NULL_HANDLE
@@ -39,14 +41,14 @@
 
     (let ((command-pool (find-command-pool device queue-family-index)))
       (when command-pool
-	      (loop for command-buffer across (command-buffers command-pool)
-	            do (free-command-buffer command-buffer)
-	            finally (setf (fill-pointer (command-buffers command-pool)) 0))
+	(loop for command-buffer across (command-buffers command-pool)
+	      do (free-command-buffer command-buffer)
+	      finally (setf (fill-pointer (command-buffers command-pool)) 0))
 
-	      (destroy-command-pool command-pool)))
+	(destroy-command-pool command-pool)))
 
     (vkDestroySurfaceKHR (h (instance (render-surface window)))
-                         VK_NULL_HANDLE ;;(h (render-surface window))
+                         (h (render-surface window))
                          (h (allocator (instance (render-surface window)))))
     (glfwDestroyWindow (h window))
     (destroy-vulkan-instance (instance device))

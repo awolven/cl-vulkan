@@ -194,3 +194,24 @@
 (defun release-index-memory (app memory-resource)
   (%release-memory (index-buffer-memory-pool app) memory-resource))
 
+
+(defun destroy-memory-pools (app)
+  (let ((vmp (vertex-buffer-memory-pool app))
+	(imp (index-buffer-memory-pool app)))
+    (%vk:vkdestroybuffer (h (device (memory-pool-buffer vmp)))
+			 (h (memory-pool-buffer vmp))
+			 (h (allocator (memory-pool-buffer vmp))))
+    (%vk:vkfreememory (h (device (allocated-memory (memory-pool-buffer vmp))))
+		      (h (allocated-memory (memory-pool-buffer vmp)))
+		      (h (allocator (allocated-memory (memory-pool-buffer vmp)))))
+    (%vk:vkdestroybuffer (h (device (memory-pool-buffer imp)))
+			 (h (memory-pool-buffer imp))
+			 (h (allocator (memory-pool-buffer imp))))
+    (%vk:vkfreememory (h (device (allocated-memory (memory-pool-buffer imp))))
+		      (h (allocated-memory (memory-pool-buffer imp)))
+		      (h (allocator (allocated-memory (memory-pool-buffer imp)))))
+    (values)))
+    
+
+
+

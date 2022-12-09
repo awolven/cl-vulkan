@@ -86,7 +86,7 @@
 			  (api-version (api-version 1 1 0))
 			  (allocator +null-allocator+)
 			  &allow-other-keys)
-
+  #+darwin(sb-int:set-floating-point-modes :traps nil)
   (let ((available-layers (available-layers))
 	(available-extensions (available-extensions)))
 

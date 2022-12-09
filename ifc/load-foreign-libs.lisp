@@ -45,7 +45,7 @@
 		 (concatenate 'string *home-dir* "/swiftshader-build1/Linux/vk_swiftshader_icd.json") 0)
 
 (cffi:define-foreign-library glfw3
-  (:darwin "libglfw.3.4.dylib")
+  (:darwin "libglfw.3.dylib")
   (:windows "glfw3.dll")
   (:linux "libglfw.so.3"))
 

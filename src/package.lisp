@@ -63,6 +63,7 @@
 	   #:subpass
 	   #:descriptor-set-layout-binding
 	   #:uniform-buffer-for-vertex-shader-dsl-binding
+	   #:storage-buffer-for-fragment-shader-dsl-binding
 	   #:uniform-buffer-for-geometry-shader-dsl-binding
 	   #:sample-uniform-buffer-for-compute-shader-dsl-binding
 	   #:sample-input-storage-buffer-for-compute-shader-dsl-binding

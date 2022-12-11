@@ -14,11 +14,16 @@
 
 (defclass index-buffer-memory-pool (memory-pool-mixin) ())
 
+(defclass storage-buffer-memory-pool (memory-pool-mixin) ())
+
 (defmethod memory-pool-buffer-usage ((memory-pool vertex-buffer-memory-pool))
   VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 
 (defmethod memory-pool-buffer-usage ((memory-pool index-buffer-memory-pool))
   VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
+
+(defmethod memory-pool-buffer-usage ((memory-pool storage-buffer-memory-pool))
+  VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
 
 (defmethod initialize-instance :before ((instance memory-pool-mixin) &rest initargs
                                         &key device size
@@ -97,6 +102,14 @@
 (defun initialize-index-buffer-memory-pool (app)
   (setf (index-buffer-memory-pool app)
         (make-instance 'index-buffer-memory-pool
+                       :size *memory-pool-size*
+                       :device (default-logical-device app)
+                       :properties (logior VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))))
+
+(defun initialize-storage-buffer-memory-pool (app)
+  (setf (storage-buffer-memory-pool app)
+        (make-instance 'storage-buffer-memory-pool
                        :size *memory-pool-size*
                        :device (default-logical-device app)
                        :properties (logior VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
@@ -188,11 +201,17 @@
 (defun acquire-index-memory-sized (app size properties)
   (%acquire-memory-sized (index-buffer-memory-pool app) size properties))
 
+(defun acquire-storage-memory-sized (app size properties)
+  (%acquire-memory-sized (storage-buffer-memory-pool app) size properties))
+
 (defun release-vertex-memory (app memory-resource)
   (%release-memory (vertex-buffer-memory-pool app) memory-resource))
 
 (defun release-index-memory (app memory-resource)
   (%release-memory (index-buffer-memory-pool app) memory-resource))
+
+(defun release-storage-memory (app memory-resource)
+  (%release-memory (storage-buffer-memory-pool app) memory-resource))
 
 
 (defun destroy-memory-pools (app)

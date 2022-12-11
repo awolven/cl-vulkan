@@ -62,6 +62,7 @@
   (apply #'setup-vulkan instance initargs)
   (initialize-vertex-buffer-memory-pool instance)
   (initialize-index-buffer-memory-pool instance)
+  (initialize-storage-buffer-memory-pool instance)
   (values))
 
 (defmethod initialize-instance :after ((instance vulkan-application-mixin)

@@ -26,13 +26,16 @@
   (src :pointer)
   (count size-t))
 
+(defcfun ("memset" memset) :pointer
+  (str :pointer) (ch :int) (n size-t))
+
 (%vk::defvkdevextfun ("vkCmdSetLineStippleEXT" vkCmdSetLineStippleEXT) :void
   (command-buffer VkCommandBuffer)
   (line-stipple-factor :unsigned-int)
   (line-stipple-pattern :unsigned-short))
 
-(defvar *debug* #+(or windows linux) 1 #+darwin nil)
-
+(defvar *debug* (if (boundp 'cl-user::*debug*) (symbol-value 'cl-user::*debug*) 1))
+  
 (defconstant VK_UUID_SIZE 16)
 
 (defconstant +NULL+ 0)

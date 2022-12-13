@@ -57,7 +57,7 @@
     (values)))
 
 (defmethod initialize-instance :before ((instance vulkan-application-mixin)
-					                              &rest initargs &key &allow-other-keys)
+					&rest initargs &key &allow-other-keys)
   (setq *app* instance)
   (apply #'setup-vulkan instance initargs)
   (initialize-vertex-buffer-memory-pool instance)
@@ -69,55 +69,56 @@
 							(width 2560) (height 1440) &allow-other-keys)
   (declare (ignore initargs))
   (setf (main-window instance)
-	      (create-vulkan-window instance (default-logical-device instance) title width height))
+	(create-vulkan-window instance (default-logical-device instance) title width height))
   (values))
 
 (defun setup-vulkan (app &rest args &key (compute-queue-count 0)
-				                              (wide-lines #+windows t #+(or darwin linux) nil)
-				                              (rectangular-lines nil)
-				                              (stippled-lines #+windows t #+(or darwin linux) nil)
-			               &allow-other-keys)
+				      (wide-lines #+windows t #+(or darwin linux) nil)
+				      (rectangular-lines nil)
+				      (stippled-lines #+windows t #+(or darwin linux) nil)
+		     &allow-other-keys)
   (let ((vulkan-instance
-	        (or *vulkan-instance* (apply #'create-instance args))))
+	  (or *vulkan-instance* (apply #'create-instance args))))
     (setf (vulkan-instance app) vulkan-instance)
     (let ((debug-callback (when (debug-report-present? vulkan-instance)
-			                      (create-debug-report-callback vulkan-instance 'debug-report-callback))))
+			    (create-debug-report-callback vulkan-instance 'debug-report-callback))))
       (setf (debug-callback vulkan-instance) debug-callback)
       
       (let ((physical-devices (enumerate-physical-devices vulkan-instance)))
 
-	      (setf (system-gpus app) physical-devices)
+	(setf (system-gpus app) physical-devices)
 	
-	      (multiple-value-bind (gpu index) (block get-gpu
-					                                 (loop for gpu in physical-devices
-					                                       do (loop for queue-family in (queue-families gpu) for i from 0
-						                                              do (let ((queue-flags (slot-value queue-family 'queue-flags)))
-							                                                 (when (not (zerop (logand queue-flags VK_QUEUE_GRAPHICS_BIT)))
-							                                                   (return-from get-gpu (values gpu i)))))))
-	        (declare (ignore index))
-	        (when (null gpu)
-	          (error "No graphics device available."))
-	        #+NIL(pick-graphics-gpu physical-devices surface)
+	(multiple-value-bind (gpu index) (block get-gpu
+					   (loop for gpu in physical-devices
+					         do (loop for queue-family in (queue-families gpu) for i from 0
+						          do (let ((queue-flags (slot-value queue-family 'queue-flags)))
+							       (when (not (zerop (logand queue-flags VK_QUEUE_GRAPHICS_BIT)))
+							         (return-from get-gpu (values gpu i)))))))
+	  (declare (ignore index))
+	  (when (null gpu)
+	    (error "No graphics device available."))
+	  #+NIL(pick-graphics-gpu physical-devices surface)
       
-	        (let* ((device (apply #'create-logical-device gpu
-				                        :compute-queue-count compute-queue-count
-				                        :device-extensions
-				                        (list VK_KHR_SWAPCHAIN_EXTENSION_NAME #-darwin "VK_EXT_line_rasterization")
-				                        :rectangular-lines rectangular-lines
-				                        :stippled-lines stippled-lines
-				                        :enable-wide-lines wide-lines
-				                        (when (has-geometry-shader-p gpu) (list :enable-geometry-shader t)))))
+	  (let* ((device (apply #'create-logical-device gpu
+				:compute-queue-count compute-queue-count
+				:device-extensions
+				(list VK_KHR_SWAPCHAIN_EXTENSION_NAME #-darwin "VK_EXT_line_rasterization")
+				:rectangular-lines rectangular-lines
+				:stippled-lines stippled-lines
+				:enable-wide-lines wide-lines
+				:enable-geometry-shader (has-geometry-shader-p gpu)
+				args)))
 
-	          (setf (default-logical-device app) device)
+	    (setf (default-logical-device app) device)
 
-	          (unless (or (zerop compute-queue-count)
-			                  (null compute-queue-count))
+	    (unless (or (zerop compute-queue-count)
+			(null compute-queue-count))
               ;; todo: this needs to work for compute-queue-count > 1
-	            (multiple-value-bind (compute-queue compute-qfi)
-		              (compute-queue device)
-		            (declare (ignore compute-queue))
-		            (let ((command-pool (or (find-command-pool device compute-qfi)
-					                              (create-command-pool device compute-qfi))))
-		              (loop for i from 0 below compute-queue-count
-		                    do (create-command-buffer device command-pool)))))
-	          (values)))))))
+	      (multiple-value-bind (compute-queue compute-qfi)
+		  (compute-queue device)
+		(declare (ignore compute-queue))
+		(let ((command-pool (or (find-command-pool device compute-qfi)
+					(create-command-pool device compute-qfi))))
+		  (loop for i from 0 below compute-queue-count
+		        do (create-command-buffer device command-pool)))))
+	    (values)))))))

@@ -168,6 +168,16 @@
     (setf (allocated-memory buffer) memory)
     buffer))
 
+(defun create-storage-buffer (device size &key (allocator +null-allocator+))
+  (let* ((buffer (create-buffer-1 device size VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+				  :buffer-class 'storage-buffer :allocator allocator))
+	 (memory (allocate-buffer-memory device buffer (logior VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+							       VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+					 :allocator allocator)))
+    (bind-buffer-memory device buffer memory)
+    (setf (allocated-memory buffer) memory)
+    buffer))
+
 (defun copy-uniform-buffer-memory (device data uniform-buffer-memory size)
   (with-foreign-object (pp-data :pointer)
     (vkMapMemory (h device) (h uniform-buffer-memory) 0 size 0 pp-data)

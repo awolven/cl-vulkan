@@ -745,6 +745,14 @@
   ((descriptor-type :initform VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
    (stage-flags :initform VK_SHADER_STAGE_VERTEX_BIT)))
 
+(defclass uniform-buffer-for-fragment-shader-dsl-binding (descriptor-set-layout-binding)
+  ((descriptor-type :initform VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+   (stage-flags :initform VK_SHADER_STAGE_FRAGMENT_BIT)))
+
+(defclass storage-buffer-for-fragment-shader-dsl-binding (descriptor-set-layout-binding)
+  ((descriptor-type :initform VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
+   (stage-flags :initform VK_SHADER_STAGE_FRAGMENT_BIT)))
+
 (defclass uniform-buffer-for-geometry-shader-dsl-binding (descriptor-set-layout-binding)
   ((binding :initform 1)
    (descriptor-type :initform VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
@@ -838,6 +846,9 @@
 (defclass uniform-buffer (buffer)
   ())
 
+(defclass storage-buffer (buffer)
+  ())
+
 (defclass descriptor-pool (handle-mixin logical-device-mixin)
   ())
 
@@ -918,6 +929,9 @@
     :initform nil)
    (index-buffer-memory-pool
     :accessor index-buffer-memory-pool
+    :initform nil)
+   (storage-buffer-memory-pool
+    :accessor storage-buffer-memory-pool
     :initform nil)))
 
 (defclass vulkan-module ()

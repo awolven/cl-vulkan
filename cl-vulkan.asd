@@ -21,7 +21,7 @@
 
 (defsystem cl-vulkan
   :description "Bindings for using Vulkan with Common Lisp"
-  :depends-on (:cffi :bordeaux-threads)
+  :depends-on (:cffi :bordeaux-threads #+noglfw :abstract-os)
   :author "Andrew K Wolven <awolven@gmail.com>"
   :components
   ((:file "features")

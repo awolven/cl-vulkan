@@ -24,7 +24,8 @@
   :depends-on (:cffi :bordeaux-threads)
   :author "Andrew K Wolven <awolven@gmail.com>"
   :components
-  ((:file "ifc/glfw/package")
+  ((:file "features")
+   (:file "ifc/glfw/package")
    (:file "ifc/glfw/glfw")
    (:file "ifc/vulkan/package")
    (:file "ifc/vulkan/vk-types")

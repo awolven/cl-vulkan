@@ -35,21 +35,22 @@
      when (eq mode presentation-mode)
      do (return t)))
 
-(cffi:defcfun ("glfwCreateWindowSurface" glfwCreateWindowSurface) VkResult
-  (instance VkInstance)
-  (window :pointer)
-  (allocator (:pointer (:struct VkAllocationCallbacks)))
-  (surface (:pointer VkSurfaceKHR)))
-
-(defun create-window-surface (instance window &key (allocator +null-allocator+))
-  (with-foreign-object (p-surface 'VkSurfaceKHR)
-    (check-vk-result (glfwCreateWindowSurface (h instance) (h window) (h allocator) p-surface))
-    (let ((surface (make-instance 'surface
-				  :handle (mem-aref p-surface 'VkSurfaceKHR)
-				  :window window
-				  :instance instance
-				  :allocator allocator)))
-      (setf (render-surface window) surface))))      
+(defun create-window-surface (device window &key (allocator +null-allocator+))
+  (let* ((surface (setf (render-surface window)
+			#+glfw(create-glfw-window-surface instance window :allocator allocator)
+			#+(and noglfw darwin)
+			(create-cocoa-window-surface window allocator)
+			#+(and noglfw win32)
+			(create-win32-window-surface window allocator)
+			#+(and noglfw x11)
+			(create-x11-window-surface window allocator)
+			#+(and noglfw wayland)
+			(create-wayland-window-surface window allocator)))
+	 (gpu (physical-device device))
+	 (index (get-queue-family-index-with-wsi-support gpu surface)))
+    (initialize-window-surface surface gpu index)
+    surface))
+    
 
 (defun initialize-window-surface (surface gpu queue-family-index)
   (setf (paired-gpu surface) gpu)

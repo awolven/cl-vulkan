@@ -81,84 +81,86 @@
 	    images))))
 
 (defun create-swapchain (device window width height surface-format present-mode
-			             &key (allocator +null-allocator+)
-			               (old-swapchain nil)
-			               (image-usage VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-			               (image-sharing-mode VK_SHARING_MODE_EXCLUSIVE)
-			               (pre-transform VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
-			               (composite-alpha VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
-			               (clipped-p t))
+			 &key (allocator +null-allocator+)
+			   (old-swapchain nil)
+			   (image-usage VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+			   (image-sharing-mode VK_SHARING_MODE_EXCLUSIVE)
+			   (pre-transform VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
+			   (composite-alpha VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
+			   (clipped-p t))
   (with-slots (surface) window
     (with-vk-struct (p-create-info VkSwapchainCreateInfoKHR)
       (with-foreign-slots ((%vk::surface
-			                %vk::imageFormat
-			                %vk::imageColorSpace
-			                %vk::imageArrayLayers
-			                %vk::imageUsage
-			                %vk::imageSharingMode
-			                %vk::preTransform
-			                %vk::compositeAlpha
-			                %vk::presentMode
-			                %vk::clipped
-			                %vk::oldSwapchain
-			                %vk::minImageCount)
-			               p-create-info
-			               (:struct VkSwapchainCreateInfoKHR))
-	    (setf %vk::surface (h surface)
-	          %vk::imageFormat (surface-format-format surface-format)
-	          %vk::imageColorSpace (surface-format-color-space surface-format)
-	          %vk::imageArrayLayers 1 ;; todo: lookup what this means.
-	          %vk::imageUsage image-usage
-	          %vk::imageSharingMode image-sharing-mode
-	          %vk::preTransform pre-transform
-	          %vk::compositeAlpha composite-alpha
-	          %vk::presentMode present-mode
-	          %vk::clipped (if (or (not clipped-p) (and (integerp clipped-p) (zerop clipped-p))) VK_FALSE VK_TRUE)
-	          %vk::oldSwapchain (if old-swapchain (h old-swapchain) +nullptr+))
+			    %vk::imageFormat
+			    %vk::imageColorSpace
+			    %vk::imageArrayLayers
+			    %vk::imageUsage
+			    %vk::imageSharingMode
+			    %vk::preTransform
+			    %vk::compositeAlpha
+			    %vk::presentMode
+			    %vk::clipped
+			    %vk::oldSwapchain
+			    %vk::minImageCount)
+			   p-create-info
+			   (:struct VkSwapchainCreateInfoKHR))
+	(setf %vk::surface (h surface)
+	      %vk::imageFormat (surface-format-format surface-format)
+	      %vk::imageColorSpace (surface-format-color-space surface-format)
+	      %vk::imageArrayLayers 1 ;; todo: lookup what this means.
+	      %vk::imageUsage image-usage
+	      %vk::imageSharingMode image-sharing-mode
+	      %vk::preTransform pre-transform
+	      %vk::compositeAlpha composite-alpha
+	      %vk::presentMode present-mode
+	      %vk::clipped (if (or (not clipped-p) (and (integerp clipped-p) (zerop clipped-p))) VK_FALSE VK_TRUE)
+	      %vk::oldSwapchain (if old-swapchain (h old-swapchain) +nullptr+))
 
-	    (let* ((capabilities (get-physical-device-surface-capabilities-khr
-			                  (physical-device device) surface))
-	           (cap-min-image-count (min-image-count capabilities))
-	           (cap-max-image-count (max-image-count capabilities)))
+	(let* ((capabilities (get-physical-device-surface-capabilities-khr
+			      (physical-device device) surface))
+	       (cap-min-image-count (min-image-count capabilities))
+	       (cap-max-image-count (max-image-count capabilities)))
 	
-	      (if (> cap-max-image-count 0)
-	          (setf %vk::minImageCount (min (+ cap-min-image-count 1) cap-max-image-count))
-	          (setf %vk::minImageCount (+ cap-min-image-count 1)))
+	  (if (> cap-max-image-count 0)
+	      (setf %vk::minImageCount (min (+ cap-min-image-count 1) cap-max-image-count))
+	      (setf %vk::minImageCount (+ cap-min-image-count 1)))
 	
-	      (let ((cap-current-extent-width (capabilities-current-extent-width capabilities))
-		        (fb-width)
-		        (fb-height))
+	  (let ((cap-current-extent-width (capabilities-current-extent-width capabilities))
+		(fb-width)
+		(fb-height))
 	  
-	        (if (eq cap-current-extent-width #xffffffff)
-		        (setf fb-width width
-		              fb-height height)
+	    (if (= cap-current-extent-width #xffffffff)
+		(setf fb-width width
+		      fb-height height)
 
-		        (setf fb-width cap-current-extent-width
-		              fb-height (capabilities-current-extent-height capabilities)))
+		(setf fb-width cap-current-extent-width
+		      fb-height (capabilities-current-extent-height capabilities)))
 
-	        (setf (foreign-slot-value
-		           (foreign-slot-pointer p-create-info '(:struct VkSwapchainCreateInfoKHR) '%vk::imageExtent)
-		           '(:struct VkExtent2D)
-		           '%vk::width) fb-width
+	    (setf (foreign-slot-value
+		   (foreign-slot-pointer p-create-info '(:struct VkSwapchainCreateInfoKHR) '%vk::imageExtent)
+		   '(:struct VkExtent2D)
+		   '%vk::width) fb-width
 
-		           (foreign-slot-value
-		            (foreign-slot-pointer p-create-info '(:struct VkSwapchainCreateInfoKHR) '%vk::imageExtent)
-		            '(:struct VkExtent2D)
-		            '%vk::height) fb-height)
+		   (foreign-slot-value
+		    (foreign-slot-pointer p-create-info '(:struct VkSwapchainCreateInfoKHR) '%vk::imageExtent)
+		    '(:struct VkExtent2D)
+		    '%vk::height) fb-height)
 
-	        (with-foreign-object (p-swapchain 'VkSwapchainKHR)
-	          (check-vk-result (vkCreateSwapchainKHR (h device) p-create-info (h allocator) p-swapchain))
-	          (when old-swapchain (vkDestroySwapchainKHR (h device) (h old-swapchain) (h allocator)))
-	          (let* ((render-pass (create-render-pass device surface-format))
-		             (swapchain (make-instance 'swapchain :handle (mem-aref p-swapchain 'VkSwapchainKHR)
-					                                      :device device
-					                                      :width fb-width
-					                                      :height fb-height
-					                                      :surface-format surface-format
-					                                      :allocator allocator
-					                                      :render-pass render-pass)))
-		        (initialize-swapchain swapchain window)
-		        swapchain))))))))
+	    (with-foreign-object (p-swapchain 'VkSwapchainKHR)
+	      (check-vk-result (vkCreateSwapchainKHR (h device) p-create-info (h allocator) p-swapchain))
+	      (when old-swapchain (vkDestroySwapchainKHR (h device) (h old-swapchain) (h allocator)))
+	      (let* ((render-pass (create-render-pass device surface-format))
+		     (swapchain (make-instance 'swapchain :handle (mem-aref p-swapchain 'VkSwapchainKHR)
+					       :device device
+					       :width fb-width
+					       :height fb-height
+					       :surface-format surface-format
+					       :allocator allocator
+					       :render-pass render-pass)))
+		(initialize-swapchain swapchain window)
+		swapchain))))))))
+
+(trace recreate-swapchain create-swapchain)
 
 (defun initialize-swapchain (swapchain window)
   (setf (swapchain window) swapchain)
@@ -200,32 +202,39 @@
     (values)))
 
 (defun recreate-swapchain (window swapchain fb-width fb-height)
-  (loop while (or (zerop fb-width) (zerop fb-height))
-        do (multiple-value-setq (fb-width fb-height) (get-framebuffer-size window))
-           (glfwWaitEvents))
-  
-  (if (not (or (zerop fb-width) (zerop fb-height)))
-      (with-slots (application) window
-	    (with-slots (device) swapchain
-	      (let* ((surface (render-surface window))
-		         (queue-family-index (queue-family-index surface)))
-            ;;(free-command-buffers command-pool)
-	        (when swapchain
-	          (destroy-swapchain-resources swapchain))
+  (declare (ignore fb-width fb-height))
+  (let ((fb-width)
+	(fb-height))
+    (with-slots (application) window
+      (flet ((try-recreate ()
+	       
+	       (multiple-value-setq (fb-width fb-height) (get-os-window-framebuffer-size window))
+	       (when (not (or (zerop fb-width) (zerop fb-height)))
+		 (with-slots (device) swapchain
+		   (let* ((surface (render-surface window))
+			  (queue-family-index (queue-family-index surface)))
+		     ;;(free-command-buffers command-pool)
+		     (when swapchain
+		       (destroy-swapchain-resources swapchain))
 	      
-	        (let ((surface-format (find-supported-format (render-surface window)))
-		          (present-mode (get-physical-device-surface-present-mode
-                                 (physical-device device) (render-surface window)))
-		          (old-swapchain swapchain))
+		     (let ((surface-format (find-supported-format (render-surface window)))
+			   (present-mode (get-physical-device-surface-present-mode
+					  (physical-device device) (render-surface window)))
+			   (old-swapchain swapchain))
 		
-	          (setf swapchain (create-swapchain device window fb-width fb-height
-						                        surface-format present-mode
-						                        :old-swapchain old-swapchain))
+		       (setf swapchain (create-swapchain device window fb-width fb-height
+							 surface-format present-mode
+							 :old-swapchain old-swapchain))
 
 		
-	          (setup-framebuffers device (render-pass swapchain) swapchain)
-	          (create-frame-resources swapchain queue-family-index))))))
-  (values))
+		       (setup-framebuffers device (render-pass swapchain) swapchain)
+		       (create-frame-resources swapchain queue-family-index)
+		       t))))))
+	
+	(loop until (try-recreate)
+	   do #+glfw(glfwWaitEvents)
+	     #+noglfw(wait-application-events application))
+	(values)))))
 
 (defun destroy-swapchain (swapchain)
   (with-slots (device) swapchain
@@ -425,7 +434,7 @@
 	      (let ((result (vkQueuePresentKHR (h queue) p-info)))
 	  
 	        (if (or (eq result VK_ERROR_OUT_OF_DATE_KHR) (eq result VK_SUBOPTIMAL_KHR))
-		        (multiple-value-bind (fb-width fb-height) (get-framebuffer-size window)
+		        (multiple-value-bind (fb-width fb-height) (get-os-window-framebuffer-size window)
 		          (recreate-swapchain window swapchain fb-width fb-height))
 		        (check-vk-result result)))))))
 

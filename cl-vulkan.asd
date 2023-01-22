@@ -19,14 +19,20 @@
 ;; OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 ;; WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+;; todo: this should be in :objc-runtime system
+;; but for now I don't want to fork that system
+#+(and darwin noglfw)(cl:pushnew :objc cl:*features*)
+#-noglfw(cl:pushnew :glfw cl:*features*)
+
 (defsystem cl-vulkan
   :description "Bindings for using Vulkan with Common Lisp"
   :depends-on (:cffi :bordeaux-threads #+noglfw :abstract-os)
   :author "Andrew K Wolven <awolven@gmail.com>"
   :components
   ((:file "features")
-   (:file "ifc/glfw/package")
-   (:file "ifc/glfw/glfw")
+   #-noglfw(:file "ifc/glfw/package")
+   #-noglfw(:file "ifc/glfw/glfw")
+   #-noglfw(:file "ifc/glfw/abstract-os-compat")
    (:file "ifc/vulkan/package")
    (:file "ifc/vulkan/vk-types")
    (:file "ifc/vulkan/s-type-table")
@@ -73,5 +79,6 @@
    (:file "src/command-buffers")
    (:file "src/sampler")
    (:file "src/spirv")
+   #+darwin(:file "src/cocoa")
    (:file "ifc/load-foreign-libs")))
   

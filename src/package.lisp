@@ -22,12 +22,45 @@
 (in-package :cl-user)
 
 (cl:defpackage :vk
-  (:use :cl :cffi :cffi-sys :%vk :$glfw)
+  (:use :cl :cffi :cffi-sys :%vk #+glfw :$glfw)
+  #-glfw
+  (:import-from :abstract-os
+		#:exit?
+		#:application-exit?
+		#:default-application-class-for-window
+		#:default-window-class-for-application
+		#:os-window-should-close?
+		#:poll-application-events
+		#:wait-application-events
+		#:get-os-window-content-scale
+		#:os-window-title
+		#:get-os-window-pos
+		#:set-os-window-pos
+		#:get-os-window-cursor-pos
+		#:get-os-window-size
+		#:focus-os-window
+		#:hide-os-window
+		#:show-os-window
+		#:maximize-os-window
+		#:restore-os-window
+		#:iconify-os-window
+		#:get-os-window-frame-size
+		#:get-os-window-framebuffer-size
+		#:set-os-window-size
+		#:set-os-window-aspect-ratio
+		#:set-os-window-size-limits
+		#:destroy-os-window
+		#:shutdown-application
+		#:*app*
+		#:get-required-instance-extensions)
+  
   (:export #:VK_WHOLE_SIZE
 	   #:allocation-callbacks
 	   #:pipeline-cache
 	   #:*vulkan-instance*
 	   #:*app*
+	   #:vulkan-window-mixin
+	   #:vulkan-window
 	   #:destroy-vulkan-instance
 	   #:free-command-buffers
 	   #:sgpu-device
@@ -215,7 +248,6 @@
 	   #:frame-begin
 	   #:frame-end
 	   #:frame-present
-	   #:shutdown-application
 	   #:setup-vulkan
 	   #:available-layers
 	   #:available-extensions
@@ -223,27 +255,9 @@
 	   #:error-callback-function
 	   #:set-window-close-callback
 	   #:find-window
-	   #:window-class
-	   #:create-window
+	   #:default-application-class-for-window
+	   #:default-window-class-for-application
 	   #:create-vulkan-window
-	   #:destroy-window
-	   #:window-should-close-p
-	   #:window-title
-	   #:get-window-pos
-	   #:set-window-pos
-	   #:get-cursor-pos
-	   #:get-window-size
-	   #:focus-window
-	   #:hide-window
-	   #:show-window
-	   #:maximize-window
-	   #:restore-window
-	   #:iconify-window
-	   #:window-frame-size
-	   #:get-framebuffer-size
-	   #:set-window-size
-	   #:set-window-aspect-ratio
-	   #:set-window-size-limits
 	   #:default-logical-device
 	   #:main-window
 	   #:queue-family-index

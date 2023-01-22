@@ -20,10 +20,7 @@
 ;; WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 (in-package :vk)
-
-(defvar *app*)
-
-(defmethod shutdown-application (app)
+(defmethod shutdown-application ((app vulkan-application-mixin))
   (let* ((window (main-window app))
 	 (swapchain (swapchain window))
 	 (device (device swapchain))
@@ -50,15 +47,14 @@
     (vkDestroySurfaceKHR (h (instance (render-surface window)))
                          (h (render-surface window))
                          (h (allocator (instance (render-surface window)))))
-    (glfwDestroyWindow (h window))
+    (destroy-os-window window)
     (destroy-vulkan-instance (instance device))
-    (glfwPollEvents) ;; bug in glfw3.3 on macosx mojave.
-    (glfwTerminate)
+    (poll-application-events app) ;; bug in glfw3.3 on macosx mojave.
+    (call-next-method)
     (values)))
 
 (defmethod initialize-instance :before ((instance vulkan-application-mixin)
 					&rest initargs &key &allow-other-keys)
-  (setq *app* instance)
   (apply #'setup-vulkan instance initargs)
   (initialize-vertex-buffer-memory-pool instance)
   (initialize-index-buffer-memory-pool instance)
@@ -69,8 +65,12 @@
 				       &rest initargs &key (title (application-name instance))
 							(width 2560) (height 1440) &allow-other-keys)
   (declare (ignore initargs))
-  (setf (main-window instance)
-	(create-vulkan-window instance (default-logical-device instance) title width height))
+  (let ((args (copy-list initargs)))
+    (remf args :width)
+    (remf args :height)
+    (remf args :title)
+    (setf (main-window instance)
+	  (apply #'create-vulkan-window instance (default-logical-device instance) title width height args)))
   (values))
 
 (defun setup-vulkan (app &rest args &key (compute-queue-count 0)
@@ -78,14 +78,12 @@
 				      (rectangular-lines nil)
 				      (stippled-lines #+windows t #+(or darwin linux) nil)
 		     &allow-other-keys)
-  (let ((vulkan-instance
-	  (or *vulkan-instance* (apply #'create-instance args))))
-    (setf (vulkan-instance app) vulkan-instance)
+  (let ((vulkan-instance (get-vulkan-instance)))
     (let ((debug-callback (when (debug-report-present? vulkan-instance)
 			    (create-debug-report-callback vulkan-instance 'debug-report-callback))))
       (setf (debug-callback vulkan-instance) debug-callback)
       
-      (let ((physical-devices (enumerate-physical-devices vulkan-instance)))
+      (let ((physical-devices (enumerate-physical-devices)))
 
 	(setf (system-gpus app) physical-devices)
 	
@@ -121,5 +119,8 @@
 		(let ((command-pool (or (find-command-pool device compute-qfi)
 					(create-command-pool device compute-qfi))))
 		  (loop for i from 0 below compute-queue-count
-		        do (create-command-buffer device command-pool)))))
+		     do (create-command-buffer device command-pool)))))
+	    
+	    (setf (default-descriptor-pool app) (create-descriptor-pool device))
+	    
 	    (values)))))))

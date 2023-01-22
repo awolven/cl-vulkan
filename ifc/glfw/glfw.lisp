@@ -862,3 +862,14 @@
 
 (cffi:defcfun ("glfwGetRequiredInstanceExtensions" glfwGetRequiredInstanceExtensions) :pointer
   (count :pointer))
+
+(defcfun ("glfwGetWindowContentScale" glfwGetWindowContentScale) :void
+  (window :pointer)
+  (xscale :pointer)
+  (yscale :pointer))
+
+(cffi:defcfun ("glfwCreateWindowSurface" glfwCreateWindowSurface) VkResult
+  (instance VkInstance)
+  (window :pointer)
+  (allocator (:pointer (:struct VkAllocationCallbacks)))
+  (surface (:pointer VkSurfaceKHR)))

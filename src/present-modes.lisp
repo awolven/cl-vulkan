@@ -35,12 +35,12 @@
 (defun get-physical-device-surface-present-mode (gpu surface)
   (setq *present-mode*
         (let ((present-modes (get-present-modes gpu surface)))
-          (if (member VK_PRESENT_MODE_MAILBOX_KHR present-modes)
-              VK_PRESENT_MODE_MAILBOX_KHR
-              (if (find VK_PRESENT_MODE_IMMEDIATE_khr present-modes)
-                  VK_PRESENT_MODE_IMMEDIATE_KHR
-                  (if (find VK_PRESENT_MODE_FIFO_RELAXED_KHR present-modes)
-                      VK_PRESENT_MODE_FIFO_RELAXED_KHR
-                      (if (find VK_PRESENT_MODE_FIFO_KHR present-modes)
-                          VK_PRESENT_MODE_FIFO_KHR
+	  (if (find VK_PRESENT_MODE_FIFO_RELAXED_KHR present-modes)
+	      VK_PRESENT_MODE_FIFO_RELAXED_KHR
+	      (if (find VK_PRESENT_MODE_FIFO_KHR present-modes)
+		  VK_PRESENT_MODE_FIFO_KHR
+		  (if (member VK_PRESENT_MODE_MAILBOX_KHR present-modes)
+		      VK_PRESENT_MODE_MAILBOX_KHR
+		      (if (find VK_PRESENT_MODE_IMMEDIATE_khr present-modes)
+			  VK_PRESENT_MODE_IMMEDIATE_KHR
                           (error "could not find a present mode for surface"))))))))

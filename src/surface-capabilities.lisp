@@ -29,7 +29,7 @@
 
 (defun get-physical-device-surface-capabilities-khr (gpu surface)
   (with-foreign-object (p-surface-capabilities '(:struct VkSurfaceCapabilitiesKHR))
-    (vkGetPhysicalDeviceSurfaceCapabilitiesKHR (h gpu) (h surface) p-surface-capabilities)
+    (check-vk-result (vkGetPhysicalDeviceSurfaceCapabilitiesKHR (h gpu) (h surface) p-surface-capabilities))
     (with-foreign-slots ((%vk::minImageCount
 			  %vk::maxImageCount
 			  %vk::maxImageArrayLayers

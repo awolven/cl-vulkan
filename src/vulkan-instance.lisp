@@ -23,6 +23,12 @@
 
 (defvar *vulkan-instance* nil)
 
+(defun get-vulkan-instance ()
+  (if *vulkan-instance*
+      *vulkan-instance*
+      (setq *vulkan-instance*
+	    (create-instance))))
+
 (defun enumerate-instance-layer-properties ()
   (with-foreign-object (p-property-count :int)
     (check-vk-result (vkEnumerateInstanceLayerProperties p-property-count +nullptr+))
@@ -106,17 +112,17 @@
        do (error "extension ~S is not available" ext)))
 
   (with-foreign-object (p-extensions-count :uint32)
+    #+glfw
     (when (zerop (glfwInit))
       (error "GLFW failed to initialize."))
     
-    (let* ((pp-glfw-extensions (glfwGetRequiredInstanceExtensions p-extensions-count))
-	   (glfw-required-extension-count (mem-aref p-extensions-count :uint32))
-	   (extension-count (+ (length extension-names) glfw-required-extension-count))
+    (let* ((required-extensions (get-required-instance-extensions))
+	   (required-extension-count (length required-extensions))
+	   (extension-count (+ (length extension-names) required-extension-count))
 	   (layer-count (length layer-names)))
-      
-      (loop for i from 0 below glfw-required-extension-count
-	 do (let ((glfw-extension (foreign-string-to-lisp (mem-aref pp-glfw-extensions '(:pointer :char) i))))
-	      (push glfw-extension extension-names)))
+
+      (loop for extension in required-extensions
+	   do (push extension extension-names))
 
       (with-foreign-objects
 	  ((pp-enabled-extension-names-with-debug '(:pointer :char) (1+ extension-count))

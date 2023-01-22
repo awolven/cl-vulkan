@@ -397,10 +397,9 @@
 				    (check-vk-result (vkCreateDevice (h gpu) p-create-info (h allocator) p-device))
 				    (let ((device (make-instance 'sgpu-device ;; todo put queue objects in device slots!
 								 :handle (mem-aref p-device 'VkDevice)
-								 :instance (instance gpu)
 								 :physical-device gpu
 								 :allocator allocator)))
-				      (push device (logical-devices (instance gpu)))
+				      (push device (logical-devices (get-vulkan-instance)))
 				      (loop for queue in queue-indices-and-totals
 					    do
 					       (push (list (first queue)

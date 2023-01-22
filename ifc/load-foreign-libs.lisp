@@ -44,6 +44,7 @@
 (sb-posix:setenv "VK_ICD_FILENAMES"
 		 (concatenate 'string *home-dir* "/swiftshader-build1/Linux/vk_swiftshader_icd.json") 0)
 
+#+glfw
 (cffi:define-foreign-library glfw3
   (:darwin "libglfw.3.dylib")
   (:windows "glfw3.dll")
@@ -54,6 +55,7 @@
   (:darwin "libvulkan.1.dylib")
   (:windows "vulkan-1.dll"))
 
+#+glfw
 (cffi:use-foreign-library glfw3)
 
 (cffi:use-foreign-library vulkan-loader)

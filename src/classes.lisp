@@ -52,15 +52,13 @@
    (debug-callback :accessor debug-callback :initform nil)))
 
 (defclass base-device (handle-mixin allocator-mixin)
-  ((instance :accessor instance)
-   (pipeline-cache :accessor pipeline-cache)
+  ((pipeline-cache :accessor pipeline-cache)
    (command-pools :accessor command-pools :initform nil)
    (descriptor-pools :accessor descriptor-pools :initform nil)
    (queues :initform nil :accessor device-queues)))
 
 (defclass sgpu-device (base-device)
-  ((physical-device :initarg :physical-device :reader physical-device)
-   (instance :initarg :instance :reader instance)))
+  ((physical-device :initarg :physical-device :reader physical-device)))
 
 (defclass mgpu-device (base-device)
   ((parent-physical-devices
@@ -92,10 +90,12 @@
    (command-buffer :reader frame-command-buffer :initarg :command-buffer)
    (command-pool :reader frame-command-pool :initarg :command-pool)))
 
-(defclass window (handle-mixin)
-  ((swapchain :accessor swapchain)
+(defclass vulkan-window-mixin
+    (#+noglfw abstract-os::vulkan-window-mixin
+	      #-noglfw handle-mixin logical-device-mixin)
+  ((swapchain :initform nil :accessor swapchain)
    (application :accessor application :initarg :app)
-   (surface :accessor render-surface)
+   (surface :initform nil :accessor render-surface)
    (command-pool :accessor command-pool)
    (clear-value
     :initform (make-array 4 :element-type 'single-float
@@ -104,15 +104,17 @@
    (recreate-swapchain? :initform nil :accessor recreate-swapchain?)
    (new-width :initform nil :accessor new-width)
    (new-height :initform nil :accessor new-height)
-
+   
    (frame-data :initform nil :accessor window-frame-data)
    (image-index :initform 0)
    (current-frame :initform 0)))
 
+(defclass vulkan-window (vulkan-window-mixin)
+  ())
+
 (defclass debug-report-callback (handle-mixin)
   ((callback-name :initarg :callback-name
 		  :reader callback-name)
-   (instance :initarg :instance :reader instance)
    (allocator :initarg :allocator :reader allocator)))
 
 (defclass surface-format ()
@@ -120,8 +122,7 @@
    (color-space :initarg :color-space :accessor surface-format-color-space)))
 
 (defclass surface (handle-mixin logical-device-mixin)
-  ((instance :reader instance :initarg :instance)
-   (paired-gpu :accessor paired-gpu)
+  ((paired-gpu :accessor paired-gpu)
    (window :accessor window :initarg :window)
    (queue-family-index :accessor queue-family-index)
    (capabilities :accessor capabilities)
@@ -618,7 +619,6 @@
 
 (defclass physical-device (handle-mixin physical-device-features physical-device-limits)
   ((index :initarg :index)
-   (instance :initarg :instance :reader instance)
    (pipeline-cache-uuid :initarg :pipeline-cache-uuid)
    (device-name :initarg :device-name :reader device-name)
    (device-type :initarg :device-type :reader device-type)
@@ -913,9 +913,8 @@
    (previous-cursor-pos :accessor previous-cursor-pos :initform nil)
    (mouse-delta :accessor mouse-delta :initform nil)))
 
-(defclass vulkan-application-mixin (glfw-application-mixin)
+(defclass vulkan-application-mixin (#+noglfw abstract-os::application-mixin #+glfw glfw-application-mixin)
   ((application-name :accessor application-name :initform "CL-Vulkan Demo" :initarg :name)
-   (vulkan-instance :accessor vulkan-instance)
    (default-logical-device :accessor default-logical-device)
    (system-gpus :accessor system-gpus :initform nil)
    (pipeline-cache :initform +null-pipeline-cache+ :initarg :pipeline-cache :reader pipeline-cache)

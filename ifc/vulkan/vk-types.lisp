@@ -239,7 +239,7 @@ MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 
 (cffi:defctype xcb_connection_t :void)
 
-(cffi:defctype Display :void)
+(cffi:defctype |Display| :void)
 
 (cffi:defctype HINSTANCE (:pointer :void))
 
@@ -255,7 +255,7 @@ MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 
 (cffi:defctype xcb_window_t :uint32)
 
-(cffi:defctype window :ulong)
+(cffi:defctype |Window| :ulong)
 
 (cffi:defctype VisualID :ulong)
 
@@ -3926,6 +3926,6 @@ MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
   (sType VkStructureType)#|MUST-BE :XLIB-SURFACE-CREATE-INFO-KHR|#
   (pNext (:pointer :void))
   (flags VkXlibSurfaceCreateFlagsKHR)#|OPTIONAL (:true)|#
-  (dpy (:pointer Display))#|OPAQUE T|#
-  (window Window))
+  (dpy (:pointer |Display|))#|OPAQUE T|#
+  (window |Window|))
 

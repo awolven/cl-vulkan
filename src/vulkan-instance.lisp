@@ -23,11 +23,11 @@
 
 (defvar *vulkan-instance* nil)
 
-(defun get-vulkan-instance ()
+(defun get-vulkan-instance (&optional system-object)
   (if *vulkan-instance*
       *vulkan-instance*
       (setq *vulkan-instance*
-	    (create-instance))))
+	    (create-instance system-object))))
 
 (defun enumerate-instance-layer-properties ()
   (with-foreign-object (p-property-count :int)
@@ -82,7 +82,7 @@
     (setq *vulkan-instance* nil)
     t))
 
-(defun create-instance (&key (title "CL-Vulkan Demo")
+(defun create-instance (system-object &key (title "CL-Vulkan Demo")
 			  (application-name title)
 			  (application-version 0)
 			  (engine-name "")
@@ -91,7 +91,8 @@
 			  extension-names
 			  (api-version (api-version 1 1 0))
 			  (allocator +null-allocator+)
-			  &allow-other-keys)
+			&allow-other-keys)
+
   #+darwin(sb-int:set-floating-point-modes :traps nil)
   (let ((available-layers (available-layers))
 	(available-extensions (available-extensions)))
@@ -116,7 +117,7 @@
     (when (zerop (glfwInit))
       (error "GLFW failed to initialize."))
     
-    (let* ((required-extensions (get-required-instance-extensions))
+    (let* ((required-extensions (get-required-instance-extensions system-object))
 	   (required-extension-count (length required-extensions))
 	   (extension-count (+ (length extension-names) required-extension-count))
 	   (layer-count (length layer-names)))

@@ -21,11 +21,11 @@
 
 (in-package :vk)
 
-(defun create-render-pass (device surface-format &key (allocator +null-allocator+)
+(defun create-render-pass (device format-enum &key (allocator +null-allocator+)
 
 						   (color-attachments (list (make-instance 'color-attachment
 											   :name :default-color-attachment
-											   :format (surface-format-format surface-format))))
+											   :format format-enum)))
 						   (depth-attachments (list (make-instance 'depth-attachment
 											   :name :default-depth-stencil-attachment
 											   :format (find-supported-depth-format (physical-device device)))))

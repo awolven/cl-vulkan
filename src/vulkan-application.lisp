@@ -20,7 +20,7 @@
 ;; WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 (in-package :vk)
-(defmethod shutdown-application ((app vulkan-application-mixin))
+(defmethod shutdown-application ((app vulkan-enabled-display-mixin))
   (let* ((window (main-window app))
 	 (swapchain (swapchain window))
 	 (device (device swapchain))
@@ -53,7 +53,7 @@
     (call-next-method)
     (values)))
 
-(defmethod initialize-instance :before ((instance vulkan-application-mixin)
+(defmethod initialize-instance :before ((instance vulkan-enabled-display-mixin)
 					&rest initargs &key &allow-other-keys)
   (apply #'setup-vulkan instance initargs)
   (initialize-vertex-buffer-memory-pool instance)
@@ -78,12 +78,12 @@
 				      (rectangular-lines nil)
 				      (stippled-lines #+windows t #+(or darwin linux) nil)
 		     &allow-other-keys)
-  (let ((vulkan-instance (get-vulkan-instance)))
+  (let ((vulkan-instance (get-vulkan-instance app)))
     (let ((debug-callback (when (debug-report-present? vulkan-instance)
 			    (create-debug-report-callback vulkan-instance 'debug-report-callback))))
       (setf (debug-callback vulkan-instance) debug-callback)
       
-      (let ((physical-devices (enumerate-physical-devices)))
+      (let ((physical-devices (enumerate-physical-devices app)))
 
 	(setf (system-gpus app) physical-devices)
 	
@@ -93,12 +93,12 @@
 						          do (let ((queue-flags (slot-value queue-family 'queue-flags)))
 							       (when (not (zerop (logand queue-flags VK_QUEUE_GRAPHICS_BIT)))
 							         (return-from get-gpu (values gpu i)))))))
-	  (declare (ignore index))
+	  ;;(declare (ignore index))
 	  (when (null gpu)
 	    (error "No graphics device available."))
 	  #+NIL(pick-graphics-gpu physical-devices surface)
       
-	  (let* ((device (apply #'create-logical-device gpu
+	  (let* ((device (apply #'create-logical-device app gpu
 				:compute-queue-count compute-queue-count
 				:device-extensions
 				(list VK_KHR_SWAPCHAIN_EXTENSION_NAME #-darwin "VK_EXT_line_rasterization")
@@ -109,6 +109,10 @@
 				args)))
 
 	    (setf (default-logical-device app) device)
+
+	    (let ((command-pool (create-command-pool device index)))
+	      (push (list index command-pool) (command-pools device))
+	      (create-command-buffer device command-pool))
 
 	    (unless (or (zerop compute-queue-count)
 			(null compute-queue-count))

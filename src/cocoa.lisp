@@ -39,7 +39,7 @@ typedef struct VkMacOSSurfaceCreateInfoMVK {
 
 #+noglfw
 (defun create-cocoa-window-surface (window allocator)
-  (let ((instance (get-vulkan-instance)))
+  (let ((instance (get-vulkan-instance nil)))
     (with-foreign-object (p-surface 'VkSurfaceKHR)
       (let ((bundle (ns::|bundleWithPath:| #@NSBundle
 			 (objc-runtime::make-nsstring "/System/Library/Frameworks/QuartzCore.framework"))))

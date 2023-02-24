@@ -35,18 +35,20 @@
 (defun set-window-close-callback (window &optional (callback-name 'window-close-callback))
   (glfwSetWindowCloseCallback (h window) (get-callback callback-name)))
 
+#+glfw
 (defun find-window (handle) ;; todo: in the ffi define this slot as int or uint
-  (find handle (window-registry *app*)
+  (gethash handle (window-registry *app*)
 	:key #'h :test #'pointer-eq))
 
 (defmethod default-window-class-for-application ((app vulkan-application-mixin))
   'vulkan-window)
 
-(defmethod abstract-os::handle-event ((window vulkan-window-mixin) (event abstract-os::window-resize-event))
+(defmethod clui::handle-event ((window vulkan-window-mixin) (event clui::window-resize-event-mixin))
   (call-next-method)
-  (recreate-swapchain window (swapchain window) nil nil)
+  (recreate-swapchain window (render-pass window) (swapchain window) nil nil)
   (values))
 
+#+NIL
 (defun create-vulkan-window (app device title width height &rest args)
   (apply #'make-instance (default-window-class-for-application app)
 	 :app app
@@ -57,19 +59,27 @@
 	 args))
 
 ;; this is a callback which happens after the native platfrom window has been created but before events start to happen
-(defmethod abstract-os::initialize-window-devices ((window vulkan-window-mixin) &rest args &key device width height &allow-other-keys)
-  (let ((surface (create-window-surface device window)))
-    (let* ((surface-format (find-supported-format surface))
+(defmethod clui::initialize-window-devices ((window vulkan-window-mixin) &rest args &key width height &allow-other-keys)
+  (let* ((device (default-logical-device (clui::window-display window)))
+	 (surface (create-window-surface device window)))
+    (let* ((surface-format (find-supported-format
+			    surface
+			    :requested-image-format (window-desired-format window)
+			    :requested-color-space (window-desired-color-space window)))
            (present-mode (get-physical-device-surface-present-mode (paired-gpu surface) surface))
-	   (swapchain (create-swapchain device window width height surface-format present-mode)))
+	   (render-pass (create-render-pass device (surface-format-format surface-format))))
       
-      (setup-framebuffers device (render-pass swapchain) swapchain)
+      (setf (render-pass window) render-pass)
+
+      (let ((swapchain (create-swapchain device window width height surface-format present-mode)))
+
+      (setup-framebuffers device render-pass swapchain)
       
       (create-frame-resources swapchain (queue-family-index surface))
       
-      (values))))
+      (values)))))
 
-(defmethod initialize-instance :after ((window vulkan-window-mixin) &rest initargs &key app &allow-other-keys)
+#+NOMORE(defmethod initialize-instance :after ((window vulkan-window-mixin) &rest initargs &key app &allow-other-keys)
   (push window (window-registry app))
   (values))
 

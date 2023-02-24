@@ -30,7 +30,7 @@
    #:VK_FALSE
    
    #:*s-type-table*
-   #:Display
+   #:|Display|
    #:xcb_connection_t
    #:MirSurface
    #:MirConnection
@@ -39,17 +39,17 @@
    #:VkBool32
    #:VkFlags
    #:VkDeviceSize
-   #:HANDLE
+   ;;#:HANDLE
    #:SIZE-T
    #:NON-DISPATCH-HANDLE
    #:HINSTANCE
    #:HWND
-   #:HANDLE
+   ;;#:HANDLE
    #:DWORD
    #:LPCWSTR
    #:RROutput
    #:xcb_window_t
-   #:window
+   #:|window|
    #:VisualID
    #:SECURITY_ATTRIBUTES
    #:wl_display

@@ -26,7 +26,7 @@
 
 (defsystem cl-vulkan
   :description "Bindings for using Vulkan with Common Lisp"
-  :depends-on (:cffi :bordeaux-threads #+noglfw :abstract-os)
+  :depends-on (:cffi :bordeaux-threads #+noglfw :clui)
   :author "Andrew K Wolven <awolven@gmail.com>"
   :components
   ((:file "features")
@@ -79,6 +79,7 @@
    (:file "src/command-buffers")
    (:file "src/sampler")
    (:file "src/spirv")
+   #+windows(:file "src/win32")
    #+darwin(:file "src/cocoa")
    (:file "ifc/load-foreign-libs")))
   

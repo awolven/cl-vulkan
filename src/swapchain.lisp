@@ -80,7 +80,8 @@
 	          do (setf (elt images i) (make-instance 'image :handle (mem-aref p-back-buffers 'VkImage i))))
 	    images))))
 
-(defun create-swapchain (device window width height surface-format present-mode
+(defun create-swapchain (device window
+			 width height surface-format present-mode
 			 &key (allocator +null-allocator+)
 			   (old-swapchain nil)
 			   (image-usage VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
@@ -149,18 +150,16 @@
 	    (with-foreign-object (p-swapchain 'VkSwapchainKHR)
 	      (check-vk-result (vkCreateSwapchainKHR (h device) p-create-info (h allocator) p-swapchain))
 	      (when old-swapchain (vkDestroySwapchainKHR (h device) (h old-swapchain) (h allocator)))
-	      (let* ((render-pass (create-render-pass device surface-format))
-		     (swapchain (make-instance 'swapchain :handle (mem-aref p-swapchain 'VkSwapchainKHR)
-					       :device device
-					       :width fb-width
-					       :height fb-height
-					       :surface-format surface-format
-					       :allocator allocator
-					       :render-pass render-pass)))
+	      (let* ((swapchain (make-instance 'swapchain :handle (mem-aref p-swapchain 'VkSwapchainKHR)
+							  :device device
+							  :width fb-width
+							  :height fb-height
+							  :surface-format surface-format
+							  :allocator allocator)))
 		(initialize-swapchain swapchain window)
 		swapchain))))))))
 
-(trace recreate-swapchain create-swapchain)
+;;(trace recreate-swapchain create-swapchain)
 
 (defun initialize-swapchain (swapchain window)
   (setf (swapchain window) swapchain)
@@ -192,23 +191,18 @@
 	           (setf (color-image-views swapchain) nil)))
 	
     (destroy-framebuffers swapchain)
-
-    (when (render-pass swapchain)
-      (destroy-render-pass (render-pass swapchain))
-      (setf (render-pass swapchain) nil))
 	
     ;; destroys semaphores and fence
     (destroy-frame-resources swapchain)
     (values)))
 
-(defun recreate-swapchain (window swapchain fb-width fb-height)
+(defun recreate-swapchain (window render-pass swapchain fb-width fb-height)
   (declare (ignore fb-width fb-height))
   (let ((fb-width)
 	(fb-height))
-    (with-slots (application) window
-      (flet ((try-recreate ()
+    (flet ((try-recreate ()
 	       
-	       (multiple-value-setq (fb-width fb-height) (get-os-window-framebuffer-size window))
+	       (multiple-value-setq (fb-width fb-height) (clui:window-framebuffer-size window))
 	       (when (not (or (zerop fb-width) (zerop fb-height)))
 		 (with-slots (device) swapchain
 		   (let* ((surface (render-surface window))
@@ -217,24 +211,28 @@
 		     (when swapchain
 		       (destroy-swapchain-resources swapchain))
 	      
-		     (let ((surface-format (find-supported-format (render-surface window)))
+		     (let ((surface-format (find-supported-format
+					    (render-surface window)
+					    :requested-image-format (window-desired-format window)
+					    :requested-color-space (window-desired-color-space window)))
 			   (present-mode (get-physical-device-surface-present-mode
 					  (physical-device device) (render-surface window)))
 			   (old-swapchain swapchain))
 		
-		       (setf swapchain (create-swapchain device window fb-width fb-height
+		       (setf swapchain (create-swapchain device window
+							 fb-width fb-height
 							 surface-format present-mode
 							 :old-swapchain old-swapchain))
 
 		
-		       (setup-framebuffers device (render-pass swapchain) swapchain)
+		       (setup-framebuffers device render-pass swapchain)
 		       (create-frame-resources swapchain queue-family-index)
 		       t))))))
 	
 	(loop until (try-recreate)
 	   do #+glfw(glfwWaitEvents)
-	     #+noglfw(wait-application-events application))
-	(values)))))
+	     #+noglfw(clui::wait-events (clui::window-display window)))
+	(values))))
 
 (defun destroy-swapchain (swapchain)
   (with-slots (device) swapchain
@@ -408,34 +406,34 @@
   (let ((frame-resource (elt (frame-resources swapchain) current-frame)))
     
     (with-foreign-objects ((p-indices :uint32)
-			               (p-swapchain 'VkSwapchainKHR)
-			               (p-wait-semaphores 'VkSemaphore))
+			   (p-swapchain 'VkSwapchainKHR)
+			   (p-wait-semaphores 'VkSemaphore))
 	      
       (setf (mem-aref p-indices :uint32) image-index
-	        (mem-aref p-swapchain 'VkSwapchainKHR) (h swapchain)
-	        (mem-aref p-wait-semaphores 'VkSemaphore)
-	        (h (render-complete-semaphore frame-resource)))
+	    (mem-aref p-swapchain 'VkSwapchainKHR) (h swapchain)
+	    (mem-aref p-wait-semaphores 'VkSemaphore)
+	    (h (render-complete-semaphore frame-resource)))
     
       (with-vk-struct (p-info VkPresentInfoKHR)
-	    (with-foreign-slots ((%vk::waitSemaphoreCount
-			                  %vk::pWaitSemaphores
-			                  %vk::swapchainCount
-			                  %vk::pSwapchains
-			                  %vk::pImageIndices)
-			                 p-info
-			                 (:struct VkPresentInfoKHR))
+	(with-foreign-slots ((%vk::waitSemaphoreCount
+			      %vk::pWaitSemaphores
+			      %vk::swapchainCount
+			      %vk::pSwapchains
+			      %vk::pImageIndices)
+			     p-info
+			     (:struct VkPresentInfoKHR))
 	
-	      (setf %vk::waitSemaphoreCount 1
-		        %vk::pWaitSemaphores p-wait-semaphores
-		        %vk::swapchainCount 1
-		        %vk::pSwapchains p-swapchain
-		        %vk::pImageIndices p-indices)
+	  (setf %vk::waitSemaphoreCount 1
+		%vk::pWaitSemaphores p-wait-semaphores
+		%vk::swapchainCount 1
+		%vk::pSwapchains p-swapchain
+		%vk::pImageIndices p-indices)
 	
-	      (let ((result (vkQueuePresentKHR (h queue) p-info)))
+	  (let ((result (vkQueuePresentKHR (h queue) p-info)))
 	  
-	        (if (or (eq result VK_ERROR_OUT_OF_DATE_KHR) (eq result VK_SUBOPTIMAL_KHR))
-		        (multiple-value-bind (fb-width fb-height) (get-os-window-framebuffer-size window)
-		          (recreate-swapchain window swapchain fb-width fb-height))
-		        (check-vk-result result)))))))
+	    (if (or (eq result VK_ERROR_OUT_OF_DATE_KHR) (eq result VK_SUBOPTIMAL_KHR))
+		(multiple-value-bind (fb-width fb-height) (window-framebuffer-size window)
+		  (recreate-swapchain window swapchain fb-width fb-height))
+		(check-vk-result result)))))))
 
   (values))

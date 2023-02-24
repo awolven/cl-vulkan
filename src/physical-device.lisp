@@ -102,8 +102,8 @@
 												    '%vk::minImageTransferGranularity)
 									      '(:struct VkExtent3D) '%vk::depth)))))))))
 
-(defun enumerate-physical-devices ()
-  (let ((instance (get-vulkan-instance)))
+(defun enumerate-physical-devices (system-object)
+  (let ((instance (get-vulkan-instance system-object)))
     (with-foreign-object (p-count :uint32)
       (check-vk-result (vkEnumeratePhysicalDevices (h instance) p-count +nullptr+))
       (let ((count (mem-aref p-count :uint32)))

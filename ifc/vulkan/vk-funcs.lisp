@@ -63,7 +63,7 @@ MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 
 (defvkinstextfun ("vkAcquireXlibDisplayEXT" vkAcquireXlibDisplayEXT) VkResult
   (physicalDevice VkPhysicalDevice)
-  (dpy (:pointer Display))
+  (dpy (:pointer |Display|))
   (display VkDisplayKHR))
 
 (cffi:defcfun ("vkAllocateCommandBuffers" vkAllocateCommandBuffers) VkResult
@@ -1298,7 +1298,7 @@ MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 (defvkinstextfun ("vkGetPhysicalDeviceXlibPresentationSupportKHR" vkGetPhysicalDeviceXlibPresentationSupportKHR) VkBool32
   (physicalDevice VkPhysicalDevice)
   (queueFamilyIndex :uint32)
-  (dpy (:pointer Display))
+  (dpy (:pointer |Display|))
   (visualID VisualID))
 
 (cffi:defcfun ("vkGetPipelineCacheData" vkGetPipelineCacheData) VkResult
@@ -1321,7 +1321,7 @@ MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 
 (defvkinstextfun ("vkGetRandROutputDisplayEXT" vkGetRandROutputDisplayEXT) VkResult
   (physicalDevice VkPhysicalDevice)
-  (dpy (:pointer Display))
+  (dpy (:pointer |Display|))
   (rrOutput RROutput)
   (pDisplay (:pointer VkDisplayKHR)))
 

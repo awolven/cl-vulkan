@@ -21,7 +21,8 @@
 
 (in-package :vk)
 
-(defun create-logical-device (gpu &key (device-extensions (list VK_KHR_SWAPCHAIN_EXTENSION_NAME))
+(defun create-logical-device (system-object
+			      gpu &key (device-extensions (list VK_KHR_SWAPCHAIN_EXTENSION_NAME))
 				    (allocator +null-allocator+)
 				    (graphics-queue-count 1)
 				    (compute-queue-count 0)
@@ -399,7 +400,7 @@
 								 :handle (mem-aref p-device 'VkDevice)
 								 :physical-device gpu
 								 :allocator allocator)))
-				      (push device (logical-devices (get-vulkan-instance)))
+				      (push device (logical-devices (get-vulkan-instance system-object)))
 				      (loop for queue in queue-indices-and-totals
 					    do
 					       (push (list (first queue)

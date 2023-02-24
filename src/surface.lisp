@@ -35,17 +35,15 @@
      when (eq mode presentation-mode)
      do (return t)))
 
+(defmethod clui::create-native-window-surface (display instance window
+					       &optional (allocator +null-allocator+))
+  (declare (ignorable display instance window allocator))
+  #+glfw(create-glfw-window-surface instance window :allocator allocator))
+
 (defun create-window-surface (device window &key (allocator +null-allocator+))
-  (let* ((surface (setf (render-surface window)
-			#+glfw(create-glfw-window-surface instance window :allocator allocator)
-			#+(and noglfw darwin)
-			(create-cocoa-window-surface window allocator)
-			#+(and noglfw win32)
-			(create-win32-window-surface window allocator)
-			#+(and noglfw x11)
-			(create-x11-window-surface window allocator)
-			#+(and noglfw wayland)
-			(create-wayland-window-surface window allocator)))
+  (let* ((surface
+	   (setf (render-surface window)
+		 (clui::create-native-window-surface (clui::window-display window) (get-vulkan-instance) window allocator)))
 	 (gpu (physical-device device))
 	 (index (get-queue-family-index-with-wsi-support gpu surface)))
     (initialize-window-surface surface gpu index)

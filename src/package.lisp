@@ -23,42 +23,14 @@
 
 (cl:defpackage :vk
   (:use :cl :cffi :cffi-sys :%vk #+glfw :$glfw)
-  #-glfw
-  (:import-from :abstract-os
-		#:exit?
-		#:application-exit?
-		#:default-application-class-for-window
-		#:default-window-class-for-application
-		#:os-window-should-close?
-		#:poll-application-events
-		#:wait-application-events
-		#:get-os-window-content-scale
-		#:os-window-title
-		#:get-os-window-pos
-		#:set-os-window-pos
-		#:get-os-window-cursor-pos
-		#:get-os-window-size
-		#:focus-os-window
-		#:hide-os-window
-		#:show-os-window
-		#:maximize-os-window
-		#:restore-os-window
-		#:iconify-os-window
-		#:get-os-window-frame-size
-		#:get-os-window-framebuffer-size
-		#:set-os-window-size
-		#:set-os-window-aspect-ratio
-		#:set-os-window-size-limits
-		#:destroy-os-window
-		#:shutdown-application
-		#:*app*
-		#:get-required-instance-extensions)
+
+  #+noglfw(:import-from :clui #:h #:handle-mixin #:handle)
   
-  (:export #:VK_WHOLE_SIZE
+  (:export #:vulkan-enabled-display-mixin
+	   #:VK_WHOLE_SIZE
 	   #:allocation-callbacks
 	   #:pipeline-cache
 	   #:*vulkan-instance*
-	   #:*app*
 	   #:vulkan-window-mixin
 	   #:vulkan-window
 	   #:destroy-vulkan-instance
@@ -254,7 +226,7 @@
 	   #:create-instance
 	   #:error-callback-function
 	   #:set-window-close-callback
-	   #:find-window
+	   ;;#:find-window
 	   #:default-application-class-for-window
 	   #:default-window-class-for-application
 	   #:create-vulkan-window

@@ -21,9 +21,11 @@
 
 (in-package :vk)
 
+#+SBCL
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (require 'sb-concurrency))
 
+#+glfw
 (defclass handle-mixin ()
   ((handle :accessor h :initarg :handle)))
 
@@ -55,7 +57,8 @@
   ((pipeline-cache :accessor pipeline-cache)
    (command-pools :accessor command-pools :initform nil)
    (descriptor-pools :accessor descriptor-pools :initform nil)
-   (queues :initform nil :accessor device-queues)))
+   (queues :initform nil :accessor device-queues)
+   (stock-render-passess :initform (make-hash-table) :accessor stock-render-passes)))
 
 (defclass sgpu-device (base-device)
   ((physical-device :initarg :physical-device :reader physical-device)))
@@ -90,10 +93,14 @@
    (command-buffer :reader frame-command-buffer :initarg :command-buffer)
    (command-pool :reader frame-command-pool :initarg :command-pool)))
 
-(defclass vulkan-window-mixin
-    (#+noglfw abstract-os::vulkan-window-mixin
-	      #-noglfw handle-mixin logical-device-mixin)
+(defclass vulkan-window-mixin (logical-device-mixin)
   ((swapchain :initform nil :accessor swapchain)
+   (render-pass :initform nil :accessor render-pass)
+   (desired-format :initform VK_FORMAT_B8G8R8A8_UNORM :accessor window-desired-format
+		   :initarg :format)
+   (desired-color-space :initform VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+			:accessor window-desired-color-space
+			:initarg :color-space)
    (application :accessor application :initarg :app)
    (surface :initform nil :accessor render-surface)
    (command-pool :accessor command-pool)
@@ -109,6 +116,12 @@
    (image-index :initform 0)
    (current-frame :initform 0)))
 
+#+noglfw
+(defclass vulkan-helper-window (clui::handle-mixin)
+  ((surface :initform nil :accessor render-surface)
+   (surface-format :initform nil :accessor surface-format)
+   (render-pass :initform nil :accessor render-pass)))
+
 (defclass vulkan-window (vulkan-window-mixin)
   ())
 
@@ -121,12 +134,15 @@
   ((format :initarg :format :accessor surface-format-format)
    (color-space :initarg :color-space :accessor surface-format-color-space)))
 
+(defclass device-surface-format (surface-format)
+  ((render-pass :accessor device-surface-format-render-pass)))
+
 (defclass surface (handle-mixin logical-device-mixin)
-  ((paired-gpu :accessor paired-gpu)
+  ((paired-gpu :initform nil :accessor paired-gpu)
    (window :accessor window :initarg :window)
    (queue-family-index :accessor queue-family-index)
    (capabilities :accessor capabilities)
-   (supported-formats :accessor supported-formats)
+   (supported-formats :initform nil :accessor supported-formats)
    (presentation-modes :accessor presentation-modes)))
 
 (defclass physical-device-features ()
@@ -903,6 +919,7 @@
 
 (defparameter +null-descriptor-set-layout+ (make-instance 'null-descriptor-set-layout))
 
+#+glfw
 (defclass glfw-application-mixin ()
   ((shift-key-down? :accessor shift-key-down? :initform nil)
    (ctrl-key-down? :accessor ctrl-key-down? :initform nil)
@@ -913,16 +930,17 @@
    (previous-cursor-pos :accessor previous-cursor-pos :initform nil)
    (mouse-delta :accessor mouse-delta :initform nil)))
 
-(defclass vulkan-application-mixin (#+noglfw abstract-os::application-mixin #+glfw glfw-application-mixin)
-  ((application-name :accessor application-name :initform "CL-Vulkan Demo" :initarg :name)
-   (default-logical-device :accessor default-logical-device)
+(defclass vulkan-application-mixin ()
+  ((application-name :accessor application-name :initform "CL-Vulkan Demo" :initarg :name)))
+
+(defclass vulkan-enabled-display-mixin ()
+  ((default-logical-device :accessor default-logical-device)
    (system-gpus :accessor system-gpus :initform nil)
    (pipeline-cache :initform +null-pipeline-cache+ :initarg :pipeline-cache :reader pipeline-cache)
    (default-descriptor-pool :accessor default-descriptor-pool)
    (allocation-callbacks :initform +null-allocator+ :initarg :allocator :reader allocator)
    (window-registry :initform nil :accessor window-registry)
    (main-window :accessor main-window)
-   (deletion-queue :reader application-deletion-queue :initform (sb-concurrency:make-queue :name "deletion-queue"))
    (vertex-buffer-memory-pool
     :accessor vertex-buffer-memory-pool
     :initform nil)

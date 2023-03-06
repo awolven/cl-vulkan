@@ -432,8 +432,8 @@
 	  (let ((result (vkQueuePresentKHR (h queue) p-info)))
 	  
 	    (if (or (eq result VK_ERROR_OUT_OF_DATE_KHR) (eq result VK_SUBOPTIMAL_KHR))
-		(multiple-value-bind (fb-width fb-height) (window-framebuffer-size window)
-		  (recreate-swapchain window swapchain fb-width fb-height))
+		(multiple-value-bind (fb-width fb-height) (clui::window-framebuffer-size window)
+		  (recreate-swapchain window (render-pass window) swapchain fb-width fb-height))
 		(check-vk-result result)))))))
 
   (values))

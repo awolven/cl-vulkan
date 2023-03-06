@@ -61,6 +61,7 @@
   (initialize-storage-buffer-memory-pool instance)
   (values))
 
+#+NILNOMORE
 (defmethod initialize-instance :after ((instance vulkan-application-mixin)
 				       &rest initargs &key (title (application-name instance))
 							(width 2560) (height 1440) &allow-other-keys)

@@ -44,8 +44,14 @@
   'vulkan-window)
 
 (defmethod clui::handle-event ((window vulkan-window-mixin) (event clui::window-resize-event-mixin))
+  (unless (render-surface window)
+    (clui::initialize-window-devices window :width (clui::window-resize-event-new-width event)
+					    :height (clui::window-resize-event-new-width event)))
   (call-next-method)
-  (recreate-swapchain window (render-pass window) (swapchain window) nil nil)
+  (recreate-swapchain window (render-pass window) (swapchain window)
+		      (clui::window-resize-event-new-width event)
+		      (clui::window-resize-event-new-width event))
+		      
   (values))
 
 #+NIL

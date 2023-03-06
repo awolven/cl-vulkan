@@ -23,35 +23,35 @@
 
 (defun create-frame-resources (swapchain queue-family-index &key (allocator +null-allocator+))
   (let* ((device (device swapchain))
-	     (queued-frames (number-of-images swapchain))
-	     (array (make-array queued-frames)))
+	 (queued-frames (number-of-images swapchain))
+	 (array (make-array queued-frames)))
     (flet ((create-semaphore ()
-	         (with-vk-struct (p-info VkSemaphoreCreateInfo)
-	           (with-foreign-objects ((p-semaphore 'VkSemaphore))
-		         (check-vk-result
-		          (vkCreateSemaphore (h device) p-info (h allocator) p-semaphore))
-		         (make-instance 'semaphore
-				                :handle (mem-aref p-semaphore 'VkSemaphore)
-				                :device device
-				                :allocator allocator)))))
+	     (with-vk-struct (p-info VkSemaphoreCreateInfo)
+	       (with-foreign-objects ((p-semaphore 'VkSemaphore))
+		 (check-vk-result
+		  (vkCreateSemaphore (h device) p-info (h allocator) p-semaphore))
+		 (make-instance 'semaphore
+				:handle (mem-aref p-semaphore 'VkSemaphore)
+				:device device
+				:allocator allocator)))))
       (setf (frame-resources swapchain) array)
       (loop for i from 0 below queued-frames
-	        do (setf (aref array i)
-		             (let ((command-pool (create-command-pool device queue-family-index)))
-		               (make-instance 'frame-resources
-				                      :fence (with-vk-struct (p-info VkFenceCreateInfo)
-					                           (with-foreign-slots ((%vk::flags)
-								                                    p-info
-								                                    (:struct VkFenceCreateInfo))
-					                             (setf %vk::flags VK_FENCE_CREATE_SIGNALED_BIT)
-					                             (with-foreign-object (p-fence 'VkFence)
-						                           (check-vk-result (vkCreateFence (h device) p-info (h allocator) p-fence))
-						                           (make-instance 'fence :handle (mem-aref p-fence 'VkFence)
-							                                             :device device :allocator allocator))))
-				                      :present-complete-semaphore (create-semaphore)
-				                      :render-complete-semaphore (create-semaphore)
-				                      :command-buffer (create-command-buffer device command-pool :allocator allocator)
-				                      :command-pool command-pool))))
+	    do (setf (aref array i)
+		     (let ((command-pool (create-command-pool device queue-family-index)))
+		       (make-instance 'frame-resources
+				      :fence (with-vk-struct (p-info VkFenceCreateInfo)
+					       (with-foreign-slots ((%vk::flags)
+								    p-info
+								    (:struct VkFenceCreateInfo))
+					         (setf %vk::flags VK_FENCE_CREATE_SIGNALED_BIT)
+					         (with-foreign-object (p-fence 'VkFence)
+						   (check-vk-result (vkCreateFence (h device) p-info (h allocator) p-fence))
+						   (make-instance 'fence :handle (mem-aref p-fence 'VkFence)
+							                 :device device :allocator allocator))))
+				      :present-complete-semaphore (create-semaphore)
+				      :render-complete-semaphore (create-semaphore)
+				      :command-buffer (create-command-buffer device command-pool :allocator allocator)
+				      :command-pool command-pool))))
       array)))
 
 (defun destroy-frame-resources (swapchain)

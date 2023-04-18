@@ -46,17 +46,17 @@ typedef struct VkMacOSSurfaceCreateInfoMVK {
 	(when (cffi:null-pointer-p bundle)
 	  (error "Cocoa: Failed to find QuartzCore.framework"))
 
-	(setf (abstract-os::window-layer window)
+	(setf (clui::window-layer window)
 	      (ns::|layer| (ns::|classNamed:| bundle (objc-runtime::make-nsstring "CAMetalLayer"))))
 
-	(when (cffi:null-pointer-p (abstract-os::window-layer window))
+	(when (cffi:null-pointer-p (clui::window-layer window))
 	  (error "Cocoa: Failed to create layer for view."))
 	;;(when (abstract-os::window-retina? window)
       
-	(ns::|setContentsScale:| (abstract-os::window-layer window) (ns::|backingScaleFactor| window))
+	(ns::|setContentsScale:| (clui::window-layer window) (ns::|backingScaleFactor| window))
       
-	(ns::|setLayer:| (abstract-os::window-content-view window) (abstract-os::window-layer window))
-	(ns::|setWantsLayer:| (abstract-os::window-content-view window) t)
+	(ns::|setLayer:| (clui::window-content-view window) (clui::window-layer window))
+	(ns::|setWantsLayer:| (clui::window-content-view window) t)
       
 	(let ((err))
 	  (if *use-metal-surface*
@@ -73,7 +73,7 @@ typedef struct VkMacOSSurfaceCreateInfoMVK {
 					%vk::pLayer)
 				       sci (:struct %vk::VkMetalSurfaceCreateInfoEXT))
 		    (setf %vk::sType %vk::VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT
-			  %vk::pLayer (abstract-os::window-layer window))
+			  %vk::pLayer (clui::window-layer window))
 		    (setq err (cffi:foreign-funcall-pointer p-fn-vkCreateMetalSurfaceEXT ()
 							    :pointer (h instance)
 							    :pointer sci
@@ -93,7 +93,7 @@ typedef struct VkMacOSSurfaceCreateInfoMVK {
 					%VK::pView)
 				       sci (:struct %vk::VkMacOSSurfaceCreateInfoMVK))
 		    (setf %vk::sType %vk::VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK
-			  %vk::pView (abstract-os::objc-object-id (abstract-os::window-content-view window)))
+			  %vk::pView (clui::objc-object-id (clui::window-content-view window)))
 		    (setq err (cffi:foreign-funcall-pointer p-fn-vkCreateMacOSSurfaceMVK ()
 							    :pointer (h instance)
 							    :pointer sci

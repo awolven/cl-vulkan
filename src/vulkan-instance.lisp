@@ -93,7 +93,7 @@
 			  (allocator +null-allocator+)
 			&allow-other-keys)
 
-  #+darwin(sb-int:set-floating-point-modes :traps nil)
+  #+(and sbcl darwin)(sb-int:set-floating-point-modes :traps nil)
   (let ((available-layers (available-layers))
 	(available-extensions (available-extensions)))
 

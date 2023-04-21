@@ -35,11 +35,6 @@
      when (eq mode presentation-mode)
      do (return t)))
 
-(defmethod clui::create-native-window-surface (display instance window
-					       &optional (allocator +null-allocator+))
-  (declare (ignorable display instance window allocator))
-  #+glfw(create-glfw-window-surface instance window :allocator allocator))
-
 (defun create-window-surface (device window &key (allocator +null-allocator+))
   (let* ((surface
 	   (setf (render-surface window)

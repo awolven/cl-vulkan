@@ -27,7 +27,7 @@
 (defparameter *cl-vulkan-dir*
   (namestring (asdf/system:system-relative-pathname :cl-vulkan "")))
 
-#+darwin
+#+(and sbcl darwin)
 (let ((vulkan-sdk-path (concatenate 'string *home-dir* "/VulkanSDK/1.3.231.1/macOS")))
   
   (sb-posix:setenv "VULKAN_SDK" vulkan-sdk-path 0)
@@ -38,6 +38,16 @@
   
 ;;  (sb-posix:setenv "VULKAN_FRAMEWORK_PATH" (concatenate 'string vulkan-sdk-path "/Frameworks") 0)
   ;;  (sb-posix:setenv "DYLD_FRAMEWORK_PATH" (concatenate 'string vulkan-sdk-path "/Frameworks") 0)
+  )
+
+#+(and ccl darwin)
+(let ((vulkan-sdk-path (concatenate 'string *home-dir* "/VulkanSDK/1.3.231.1/macOS")))
+  
+  (setf (uiop/os:getenv "VULKAN_SDK") vulkan-sdk-path)
+  (setf (uiop/os:getenv "DYLD_LIBRARY_PATH") (concatenate 'string (uiop/os:getenv "DYLD_LIBRARY_PATH") ":" vulkan-sdk-path "/lib"))
+  (setf (uiop/os:getenv "VK_ADD_LAYER_PATH") (concatenate 'string vulkan-sdk-path "/share/vulkan/explicit_layer.d"))
+  (setf (uiop/os:getenv "VK_ICD_FILENAMES") (concatenate 'string vulkan-sdk-path "/share/vulkan/icd.d/MoltenVK_icd.json"))
+  (setf (uiop/os:getenv "VK_DRIVER_FILES") (concatenate 'string vulkan-sdk-path "/share/vulkan/icd.d/MoltenVK_icd.json"))
   )
 
 #+swiftshader

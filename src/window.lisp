@@ -54,16 +54,6 @@
 		      
   (values))
 
-#+NIL
-(defun create-vulkan-window (app device title width height &rest args)
-  (apply #'make-instance (default-window-class-for-application app)
-	 :app app
-	 :width width
-	 :height height
-	 :title title
-	 :device device
-	 args))
-
 ;; this is a callback which happens after the native platfrom window has been created but before events start to happen
 (defmethod clui::initialize-window-devices ((window vulkan-window-mixin) &rest args &key width height &allow-other-keys)
   (let* ((device (default-logical-device (clui::window-display window)))
@@ -84,10 +74,6 @@
       (create-frame-resources swapchain (queue-family-index surface))
       
       (values)))))
-
-#+NOMORE(defmethod initialize-instance :after ((window vulkan-window-mixin) &rest initargs &key app &allow-other-keys)
-  (push window (window-registry app))
-  (values))
 
 (defmethod destroy-os-window ((window vulkan-window))
   (let* ((app (application window))

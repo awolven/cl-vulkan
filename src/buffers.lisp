@@ -111,9 +111,8 @@
   (values))
 
 (defun create-empty-buffer (device size usage &key (allocator +null-allocator+)
-						(memory-properties
-						 (logior VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-							 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+						(memory-properties (logior VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+									   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
 						(buffer-class 'buffer))
   (let* ((buffer (create-buffer-1 device size usage :buffer-class buffer-class :allocator allocator))
 	 (buffer-memory (allocate-buffer-memory device buffer memory-properties

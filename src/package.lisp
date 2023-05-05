@@ -276,11 +276,5 @@
 
 	   #:clampf
 
-	   #:shift-key-down?
-	   #:ctrl-key-down?
-	   #:meta-key-down?
-	   #:super-key-down?
-	   #:mouse-down?
-	   #:current-cursor-pos
-	   #:previous-cursor-pos
-	   #:mouse-delta))
+	   #:+buffer-alignment+
+	   #:aligned-size))

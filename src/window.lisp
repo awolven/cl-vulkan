@@ -44,15 +44,16 @@
   'vulkan-window)
 
 (defmethod clui::handle-event ((window vulkan-window-mixin) (event clui::window-resize-event-mixin))
-  (unless (render-surface window)
-    (clui::initialize-window-devices window :width (clui::window-resize-event-new-width event)
-					    :height (clui::window-resize-event-new-width event)))
-  (call-next-method)
-  (recreate-swapchain window (render-pass window) (swapchain window)
-		      (clui::window-resize-event-new-width event)
-		      (clui::window-resize-event-new-width event))
-		      
-  (values))
+  (let ((width (clui::window-resize-event-new-width event))
+	(height (clui::window-resize-event-new-height event)))
+    (unless (or (zerop width) (zerop height))
+      (unless (render-surface window)
+	(clui::initialize-window-devices window
+					 :width width
+					 :height height))
+      (call-next-method)
+      (recreate-swapchain window (render-pass window) (swapchain window) width height)
+      (values))))
 
 ;; this is a callback which happens after the native platfrom window has been created but before events start to happen
 (defmethod clui::initialize-window-devices ((window vulkan-window-mixin) &rest args &key width height &allow-other-keys)

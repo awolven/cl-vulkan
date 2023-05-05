@@ -644,8 +644,9 @@
    (api-version :initarg :api-version :reader physical-device-api-version)
    (device-group-index)
    (device-group-device-index)
-   (memory-properties :accessor memory-properties)
-   (queue-families :accessor queue-families)))
+   (queue-families :accessor queue-families)
+   (memory-heaps :accessor memory-heaps :initarg :memory-heaps)
+   (memory-types :accessor memory-types :initarg :memory-types)))
 
 (defmethod print-object ((gpu physical-device) stream)
   (format stream "#<GPU ~A>" (device-name gpu)))
@@ -941,14 +942,8 @@
    (allocation-callbacks :initform +null-allocator+ :initarg :allocator :reader allocator)
    (window-registry :initform nil :accessor window-registry)
    (main-window :accessor main-window)
-   (vertex-buffer-memory-pool
-    :accessor vertex-buffer-memory-pool
-    :initform nil)
-   (index-buffer-memory-pool
-    :accessor index-buffer-memory-pool
-    :initform nil)
-   (storage-buffer-memory-pool
-    :accessor storage-buffer-memory-pool
+   (memory-pool
+    :accessor memory-pool
     :initform nil)))
 
 (defclass vulkan-module ()

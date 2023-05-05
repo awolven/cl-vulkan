@@ -45,32 +45,6 @@
 	  (return-from get-any-queue-family-index-with-transfer-support i))
      finally (return nil)))
 
-(defun get-physical-device-memory-properties (gpu)
-  (with-foreign-object (p-memory-properties '(:struct VkPhysicalDeviceMemoryProperties))
-    (vkGetPhysicalDeviceMemoryProperties (h gpu) p-memory-properties)
-    (with-foreign-slots ((%vk::memoryTypeCount
-			  %vk::memoryHeapCount)
-			 p-memory-properties
-			 (:struct VkPhysicalDeviceMemoryProperties))
-      (values
-       (loop for i from 0 below %vk::memoryTypeCount
-	  collect (let ((p-memory-types (foreign-slot-pointer p-memory-properties
-							      '(:struct VkPhysicalDeviceMemoryProperties)
-							      '%vk::memoryTypes)))
-		    (with-foreign-object (p-types '(:struct VkMemoryType) %vk::memoryTypeCount)
-		      (make-instance 'memory-type
-				     :property-flags (foreign-slot-value p-memory-types '(:struct VkMemoryType) '%vk::propertyFlags)
-				     :heap-index (foreign-slot-value p-memory-types '(:struct VkMemoryType) '%vk::heapIndex)))))
-       (loop for i from 0 below %vk::memoryHeapCount
-	  collect (let ((p-memory-heaps (foreign-slot-pointer p-memory-properties
-							      '(:struct VkPhysicalDeviceMemoryProperties)
-							      '%vk::memoryHeaps)))
-		    (with-foreign-object (p-types '(:struct VkMemoryHeap) %vk::memoryHeapCount)
-		      (make-instance 'memory-heap
-				     :flags (foreign-slot-value p-memory-heaps '(:struct VkMemoryHeap) '%vk::flags)
-				     :size (foreign-slot-value p-memory-heaps '(:struct VkMemoryHeap) '%vk::size)))))))))       
-      
-
 (defun get-physical-device-queue-family-properties (gpu)
   (with-foreign-object (p-queue-family-property-count :uint32)
     (vkGetPhysicalDeviceQueueFamilyProperties (h gpu) p-queue-family-property-count +nullptr+)
@@ -137,6 +111,8 @@
 						     :device-id %vk::deviceID
 						     :device-type %vk::deviceType
 						     :device-name (foreign-string-to-lisp %vk::deviceName :encoding :utf-8)
+						     :memory-heaps (%get-memory-heaps (mem-aref p-gpus 'VkPhysicalDevice i))
+						     :memory-types (%get-memory-types (mem-aref p-gpus 'VkPhysicalDevice i))
 						     :pipeline-cache-uuid
 						     (make-array VK_UUID_SIZE :element-type '(unsigned-byte 8)
 								 :initial-contents
@@ -500,5 +476,4 @@
 						     (foreign-slot-value p-limits '(:struct VkPhysicalDeviceLimits) '%vk::nonCoherentAtomSize)
 						     )))
 				 (setf (queue-families gpu) (get-physical-device-queue-family-properties gpu))
-				 (setf (memory-properties gpu) (multiple-value-list (get-physical-device-memory-properties gpu)))
 				 gpu))))))))))))

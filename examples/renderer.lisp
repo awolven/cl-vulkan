@@ -2,7 +2,7 @@
 
 (defconstant +max-frames+ 4)
 
-(defconstant +buffer-alignment+ 256)
+
 
 (defconstant +fnv-float-big+ #.(* 3 4096))
 (defconstant +fnv-float-huge+ #.(* 24 4096))

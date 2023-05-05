@@ -20,15 +20,15 @@
 ;; WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 (in-package :vk)
-(defmethod shutdown-application ((app vulkan-enabled-display-mixin))
-  (let* ((window (main-window app))
+(defmethod shutdown-application ((dpy vulkan-enabled-display-mixin))
+  (let* ((window (main-window dpy))
 	 (swapchain (swapchain window))
 	 (device (device swapchain))
 	 (queue-family-index (queue-family-index (render-surface window))))
 
     (device-wait-idle device)
 
-    (destroy-memory-pools app)
+    (destroy-memory-pools dpy)
 
     (vkDestroyDescriptorPool (h device)
                              vk::VK_NULL_HANDLE
@@ -49,44 +49,29 @@
                          (h (allocator (instance (render-surface window)))))
     (destroy-os-window window)
     (destroy-vulkan-instance (instance device))
-    (poll-application-events app) ;; bug in glfw3.3 on macosx mojave.
+    (poll-application-events dpy) ;; bug in glfw3.3 on macosx mojave.
     (call-next-method)
     (values)))
 
 (defmethod initialize-instance :before ((instance vulkan-enabled-display-mixin)
 					&rest initargs &key &allow-other-keys)
   (apply #'setup-vulkan instance initargs)
-  (initialize-vertex-buffer-memory-pool instance)
-  (initialize-index-buffer-memory-pool instance)
-  (initialize-storage-buffer-memory-pool instance)
+  (initialize-buffer-memory-pool instance)
   (values))
 
-#+NILNOMORE
-(defmethod initialize-instance :after ((instance vulkan-application-mixin)
-				       &rest initargs &key (title (application-name instance))
-							(width 2560) (height 1440) &allow-other-keys)
-  (declare (ignore initargs))
-  (let ((args (copy-list initargs)))
-    (remf args :width)
-    (remf args :height)
-    (remf args :title)
-    (setf (main-window instance)
-	  (apply #'create-vulkan-window instance (default-logical-device instance) title width height args)))
-  (values))
-
-(defun setup-vulkan (app &rest args &key (compute-queue-count 0)
+(defun setup-vulkan (dpy &rest args &key (compute-queue-count 0)
 				      (wide-lines #+windows t #+(or darwin linux) nil)
 				      (rectangular-lines nil)
 				      (stippled-lines #+windows t #+(or darwin linux) nil)
 		     &allow-other-keys)
-  (let ((vulkan-instance (get-vulkan-instance app)))
+  (let ((vulkan-instance (get-vulkan-instance dpy)))
     (let ((debug-callback (when (debug-report-present? vulkan-instance)
 			    (create-debug-report-callback vulkan-instance 'debug-report-callback))))
       (setf (debug-callback vulkan-instance) debug-callback)
       
-      (let ((physical-devices (enumerate-physical-devices app)))
+      (let ((physical-devices (enumerate-physical-devices dpy)))
 
-	(setf (system-gpus app) physical-devices)
+	(setf (system-gpus dpy) physical-devices)
 	
 	(multiple-value-bind (gpu index) (block get-gpu
 					   (loop for gpu in physical-devices
@@ -99,7 +84,7 @@
 	    (error "No graphics device available."))
 	  #+NIL(pick-graphics-gpu physical-devices surface)
       
-	  (let* ((device (apply #'create-logical-device app gpu
+	  (let* ((device (apply #'create-logical-device dpy gpu
 				:compute-queue-count compute-queue-count
 				:device-extensions
 				(list VK_KHR_SWAPCHAIN_EXTENSION_NAME #-darwin "VK_EXT_line_rasterization")
@@ -109,7 +94,7 @@
 				:enable-geometry-shader (has-geometry-shader-p gpu)
 				args)))
 
-	    (setf (default-logical-device app) device)
+	    (setf (default-logical-device dpy) device)
 
 	    (let ((command-pool (create-command-pool device index)))
 	      (push (list index command-pool) (command-pools device))
@@ -126,6 +111,6 @@
 		  (loop for i from 0 below compute-queue-count
 		     do (create-command-buffer device command-pool)))))
 	    
-	    (setf (default-descriptor-pool app) (create-descriptor-pool device))
+	    (setf (default-descriptor-pool dpy) (create-descriptor-pool device))
 	    
 	    (values)))))))

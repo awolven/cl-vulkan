@@ -31,16 +31,13 @@ typedef struct VkWin32SurfaceCreateInfoKHR {
 
     (cffi:with-foreign-object (p-info '(:struct VKWin32SurfaceCreateInfoKHR))
       (cffi:with-foreign-slots ((sType
-				 pNext
-				 flags
 				 hinstance
 				 hwnd)
 				p-info
 				(:struct VKWin32SurfaceCreateInfoKHR))
+	(vk::memset p-info 0 (cffi:foreign-type-size '(:struct VKWin32SurfaceCreateInfoKHR)))
 
 	(setf sType VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR
-	      pNext (cffi:null-pointer)
-	      flags 0
 	      hinstance (h instance)
 	      hwnd (noffi::ptr-value (h window)))
 

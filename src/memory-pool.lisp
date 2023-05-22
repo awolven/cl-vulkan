@@ -356,7 +356,7 @@
 	    (memory-resource-custom
 	     (push memory-resource (memory-pool-obscene-free memory-pool))
 	     t)
-	    (t (warn "~S is not a known memory-resource type" memory-pool)))
+	    (t (warn "~S is not a known memory-resource type" memory-resource)))
       (remhash memory-resource (slot-value memory-pool 'allocated))
       (values))))
       

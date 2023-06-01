@@ -748,8 +748,16 @@
   ((name :initarg :name :reader subpass-name)
    (pipeline-bind-point :initarg :pipeline-bind-point :reader pipeline-bind-point :initform VK_PIPELINE_BIND_POINT_GRAPHICS)
    (color-attachments :initarg :color-attachments :reader color-attachments)
-   (depth-stencil-attachment :initarg :depth-stencil-attachment :reader depth-stencil-attachment)
+   (depth-attachments :initarg :depth-attachments :reader depth-attachments)
    (dependencies :initarg :dependencies :initform nil :reader dependencies)))
+
+(defclass subpass-dependency ()
+  ((src-subpass :initarg :src-subpass :initform 0 :reader src-subpass)
+   (dst-subpass :initarg :dst-subpass :initform 0 :reader dst-subpass)
+   (src-access-mask :initarg :src-access-mask :initform 0 :reader src-access-mask)
+   (src-stage-mask :initarg :src-stage-mask :initform 0 :reader src-stage-mask)
+   (dst-access-mask :initarg :dst-access-mask :initform 0 :reader dst-access-mask)
+   (dst-stage-mask :initarg :dst-stage-mask :initform 0 :reader dst-stage-mask)))
 
 (defclass descriptor-set-layout-binding ()
   ((binding :initarg :binding :initform 0 :reader binding)

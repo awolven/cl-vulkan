@@ -32,7 +32,8 @@
 						(subpasses (list (make-instance 'subpass
 										:name :default-subpass
 										:color-attachments (list :default-color-attachment)
-										:depth-stencil-attachment :default-depth-stencil-attachment))))
+										:depth-attachments (list :default-depth-stencil-attachment))))
+						(subpass-dependencies nil))
 										   
   (let ((attachment-count (+ (length color-attachments) (length depth-attachments)))
 	(pointers ()))
@@ -57,7 +58,8 @@
 		       %vk::initialLayout (initial-layout attachment)
 		       %vk::finalLayout (final-layout attachment))))
 
-      (let ((subpass-count (length subpasses)))
+      (let ((subpass-count (length subpasses))
+	    (dependency-count (length subpass-dependencies)))
 
 	(unwind-protect
 	     (with-foreign-object (p-subpasses '(:struct VkSubpassDescription) subpass-count)
@@ -81,55 +83,67 @@
 							    (:struct VkAttachmentReference))
 					 (setf %vk::attachment (position reference color-attachments :key #'attachment-name)
 					       %vk::layout (reference-layout (find reference color-attachments :key #'attachment-name)))))
-			      (let ((p-depth-attachment-ref (foreign-alloc '(:struct VkAttachmentReference))))
-				(zero-struct p-depth-attachment-ref '(:struct VkAttachmentReference))
-				(push p-depth-attachment-ref pointers)
-				(with-foreign-slots ((%vk::attachment %vk::layout)
-						     p-depth-attachment-ref
-						     (:struct VkAttachmentReference))
-				  (setf %vk::attachment (+ (length color-attachments) (position :default-depth-stencil-attachment depth-attachments :key #'attachment-name))
-					%vk::layout (reference-layout (find :default-depth-stencil-attachment depth-attachments :key #'attachment-name))))
+			      (let* ((depth-attachment-references (depth-attachments subpass))
+				     (reference-count (length depth-attachment-references))
+				     (p-depth-attachment-refs (foreign-alloc '(:struct VkAttachmentReference) :count reference-count)))
+				(loop for reference in depth-attachment-references
+				      do (let ((p-depth-attachment-ref (mem-aptr p-depth-attachment-refs '(:struct VkAttachmentReference) i)))
+					   (zero-struct p-depth-attachment-ref '(:struct VkAttachmentReference))
+					   (push p-depth-attachment-ref pointers)
+					   (with-foreign-slots ((%vk::attachment %vk::layout)
+								p-depth-attachment-ref
+								(:struct VkAttachmentReference))
+					     (setf %vk::attachment (+ (length color-attachments) (position reference depth-attachments :key #'attachment-name))
+						   %vk::layout (reference-layout (find reference depth-attachments :key #'attachment-name))))
 		       
-				(setf %vk::pipelineBindPoint (pipeline-bind-point subpass)
-				      %vk::colorAttachmentCount reference-count
-				      %vk::pColorAttachments p-attachment-refs
-				      %vk::pDepthStencilAttachment p-depth-attachment-ref))))))
+					   (setf %vk::pipelineBindPoint (pipeline-bind-point subpass)
+						 %vk::colorAttachmentCount reference-count
+						 %vk::pColorAttachments p-attachment-refs
+						 %vk::pDepthStencilAttachment p-depth-attachment-ref))))))))
 
-	       (with-vk-struct (p-dependencies VkSubpassDependency)
-		 (with-foreign-slots ((%vk::srcSubpass
-				       %vk::dstSubpass
-				       %vk::srcAccessMask
-				       %vk::srcStageMask
-				       %vk::dstStageMask
-				       %vk::dstAccessMask)
-				      p-dependencies (:struct VkSubpassDependency))
+	       (with-foreign-object (p-dependencies '(:struct VkSubpassDependency) dependency-count)
+		 (loop for i from 0 for dependency in subpass-dependencies
+		       do (zero-struct (mem-aptr p-dependencies '(:struct VkSubpassDependency) i) '(:struct VkSubpassDependency))
+			  (with-foreign-slots ((%vk::srcSubpass
+						%vk::dstSubpass
+						%vk::srcAccessMask
+						%vk::srcStageMask
+						%vk::dstStageMask
+						%vk::dstAccessMask)
+					       (mem-aptr p-dependencies '(:struct VkSubpassDependency) i)
+					       (:struct VkSubpassDependency))
 
-		   (setf %vk::srcSubpass VK_SUBPASS_EXTERNAL
-			 %vk::dstSubpass 0
-			 %vk::srcAccessMask 0
-			 %vk::srcStageMask (logior VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT)
-			 %vk::dstStageMask (logior VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT)
-			 %vk::dstAccessMask (logior VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT))
-	
-		   (with-vk-struct (p-info VkRenderPassCreateInfo)
-		     (with-foreign-slots ((%vk::attachmentCount
-					   %vk::pAttachments
-					   %vk::subpassCount
-					   %vk::pSubpasses
-					   %vk::dependencyCount
-					   %vk::pDependencies)
-					  p-info (:struct VkRenderPassCreateInfo))
-		       (setf %vk::attachmentCount attachment-count
-			     %vk::pAttachments p-attachments
-			     %vk::subpassCount subpass-count
-			     %vk::pSubpasses p-subpasses
-			     %vk::dependencyCount 1
-			     %vk::pDependencies p-dependencies))
+			    (setf %vk::srcSubpass (src-subpass dependency)
+				  %vk::dstSubpass (dst-subpass dependency)
+				  %vk::srcAccessMask (src-access-mask dependency)
+				  %vk::srcStageMask (src-stage-mask dependency)
+				  ;;(logior VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT)
+				  %vk::dstStageMask (dst-stage-mask dependency)
+				  ;;(logior VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT)
+				  %vk::dstAccessMask (dst-access-mask dependency)
+				  ;;(logior VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT))
+				  )))
+
+
+		 (with-vk-struct (p-info VkRenderPassCreateInfo)
+		   (with-foreign-slots ((%vk::attachmentCount
+					 %vk::pAttachments
+					 %vk::subpassCount
+					 %vk::pSubpasses
+					 %vk::dependencyCount
+					 %vk::pDependencies)
+					p-info (:struct VkRenderPassCreateInfo))
+		     (setf %vk::attachmentCount attachment-count
+			   %vk::pAttachments p-attachments
+			   %vk::subpassCount subpass-count
+			   %vk::pSubpasses p-subpasses
+			   %vk::dependencyCount dependency-count
+			   %vk::pDependencies p-dependencies))
 		
-		     (with-foreign-object (p-render-pass 'VkRenderPass)
-		       (check-vk-result (vkCreateRenderPass (h device) p-info (h allocator) p-render-pass))
-		       (make-instance 'render-pass :handle (mem-aref p-render-pass 'VkRenderPass)
-						   :device device :allocator allocator))))))
+		   (with-foreign-object (p-render-pass 'VkRenderPass)
+		     (check-vk-result (vkCreateRenderPass (h device) p-info (h allocator) p-render-pass))
+		     (make-instance 'render-pass :handle (mem-aref p-render-pass 'VkRenderPass)
+						 :device device :allocator allocator)))))
 	  (mapcar #'foreign-free pointers))))))
 
 (defun destroy-render-pass (render-pass)

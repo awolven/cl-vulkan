@@ -209,14 +209,16 @@
   (declare (ignore initargs))
   (let ((buffer-counts (get-buffer-counts (allocated-memory-size (allocation instance)))))
     (loop for count in buffer-counts
+	  with offset = 0
        for i from 11 by 2
        for name in '("MINISCULE" "TINY" "SMALL" "REGULAR" "MEDIUM" "LARGE" "VERY-LARGE" "HUGE" "GIGANTIC" "GINORMOUS" "OBSCENE")
-       do (loop for j from 0 below count
+       do (loop repeat count
 	     do (eval `(push (,(intern (concatenate 'string "MAKE-MEMORY-RESOURCE-" name) :vk)
 			       :memory-pool ,instance
-			       :offset ,(* j (expt 2 i))
+			       :offset ,offset
 			       :size ,(expt 2 i))
-			     (,(intern (concatenate 'string "MEMORY-POOL-" name "-FREE") :vk) ,instance)))))
+			     (,(intern (concatenate 'string "MEMORY-POOL-" name "-FREE") :vk) ,instance)))
+		(incf offset (expt 2 i))))
     (values)))
 
 (defmacro define-memory-acquisition-function (name)

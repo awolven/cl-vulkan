@@ -5,7 +5,7 @@
    (lock :initform (bt:make-lock))
    (memory-allocation :reader allocation)
    (device :accessor memory-pool-device)
-   (buffer :accessor memory-pool-buffer)
+   (buffer :accessor memory-pool-big-buffer)
    (allocated :initform (make-hash-table))
    (miniscule-free :initform nil :accessor memory-pool-miniscule-free)
    (tiny-free :initform nil :accessor memory-pool-tiny-free)
@@ -68,11 +68,12 @@
 				     :size size)))
 	      (setf (allocated-memory big-buffer) (slot-value instance 'memory-allocation))
 	      (bind-buffer-memory device big-buffer (slot-value instance 'memory-allocation))
-	      (setf (memory-pool-buffer instance) big-buffer)))))))
+	      (setf (memory-pool-big-buffer instance) big-buffer)))))))
   (values))
 
 (defstruct memory-resource
   (memory-pool)
+  (buffer)
   (offset)
   (size))
 
@@ -111,7 +112,6 @@
 
 (defstruct (memory-resource-custom
 	     (:include memory-resource))
-  (buffer)
   (allocation))
 
 (defconstant +buffer-alignment+ 256)
@@ -125,7 +125,7 @@
   (let ((actual-size (aligned-size (round (* 2 size))))
 	(device (memory-pool-device memory-pool)))
     (or (loop for memory-resource in (memory-pool-custom-free memory-pool)
-	   when (>= actual-size (memory-resource-size memory-resource))
+	   when (>= (memory-resource-size memory-resource) actual-size)
 	   do (setf (memory-pool-custom-free memory-pool) (delete memory-resource (memory-pool-custom-free memory-pool)))
 	     (return (setf (gethash memory-resource (slot-value memory-pool 'allocated)) memory-resource)))
 	
@@ -179,9 +179,9 @@
 (defparameter *medium-buffer-size* (expt 2 19)) ;; 512 kB --> 0
 (defparameter *large-buffer-size* (expt 2 21)) ;; 2 MB --> 2
 (defparameter *very-large-buffer-size* (expt 2 23)) ;; 8 MB  --> 2
-(defparameter *huge-buffer-size* (expt 2 25)) ;; 32 MB --> 29
-(defparameter *gigantic-buffer-size* (expt 2 27)) ;; 128 MB --> 20
-(defparameter *ginormous-buffer-size* (expt 2 29)) ;; 512 MB --> 11
+(defparameter *huge-buffer-size* (expt 2 25)) ;; 32 MB
+(defparameter *gigantic-buffer-size* (expt 2 27)) ;; 128 MB
+(defparameter *ginormous-buffer-size* (expt 2 29)) ;; 512 MB
 (defparameter *obscene-buffer-size* (expt 2 31)) ;; 2 GB
 
 (defun get-buffer-counts (max-size)
@@ -210,15 +210,17 @@
   (let ((buffer-counts (get-buffer-counts (allocated-memory-size (allocation instance)))))
     (loop for count in buffer-counts
 	  with offset = 0
+	  with size
        for i from 11 by 2
        for name in '("MINISCULE" "TINY" "SMALL" "REGULAR" "MEDIUM" "LARGE" "VERY-LARGE" "HUGE" "GIGANTIC" "GINORMOUS" "OBSCENE")
        do (loop repeat count
 	     do (eval `(push (,(intern (concatenate 'string "MAKE-MEMORY-RESOURCE-" name) :vk)
-			       :memory-pool ,instance
-			       :offset ,offset
-			       :size ,(expt 2 i))
+			      :memory-pool ,instance
+			      :buffer ,(memory-pool-big-buffer instance)
+			      :offset ,offset
+			      :size ,(setq size (expt 2 i)))
 			     (,(intern (concatenate 'string "MEMORY-POOL-" name "-FREE") :vk) ,instance)))
-		(incf offset (expt 2 i))))
+		(incf offset size)))
     (values)))
 
 (defmacro define-memory-acquisition-function (name)
@@ -356,7 +358,7 @@
 	     (push memory-resource (memory-pool-obscene-free memory-pool))
 	     t)
 	    (memory-resource-custom
-	     (push memory-resource (memory-pool-obscene-free memory-pool))
+	     (push memory-resource (memory-pool-custom-free memory-pool))
 	     t)
 	    (t (warn "~S is not a known memory-resource type" memory-resource)))
       (remhash memory-resource (slot-value memory-pool 'allocated))
@@ -366,12 +368,13 @@
 
 (defun destroy-memory-pools (app)
   (let ((mp (memory-pool app)))
-    (%vk:vkdestroybuffer (h (device (memory-pool-buffer mp)))
-			 (h (memory-pool-buffer mp))
-			 (h (allocator (memory-pool-buffer mp))))
-    (%vk:vkfreememory (h (device (allocated-memory (memory-pool-buffer mp))))
-		      (h (allocated-memory (memory-pool-buffer mp)))
-		      (h (allocator (allocated-memory (memory-pool-buffer mp)))))
+    (%vk:vkdestroybuffer (h (device (memory-pool-big-buffer mp)))
+			 (h (memory-pool-big-buffer mp))
+			 (h (allocator (memory-pool-big-buffer mp))))
+    (%vk:vkfreememory (h (device (allocated-memory (memory-pool-big-buffer mp))))
+		      (h (allocated-memory (memory-pool-big-buffer mp)))
+		      (h (allocator (allocated-memory (memory-pool-big-buffer mp)))))
+    ;; todo: free custom
     (values)))
     
 

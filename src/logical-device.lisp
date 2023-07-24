@@ -24,7 +24,8 @@
 
 
 (defun create-logical-device (system-object
-			      gpu &key (device-extensions (list VK_KHR_SWAPCHAIN_EXTENSION_NAME))
+			      gpu &key (device-extensions (list VK_KHR_SWAPCHAIN_EXTENSION_NAME
+								#+darwin "VK_KHR_portability_subset"))
 				    (allocator +null-allocator+)
 				    (graphics-queue-count 1)
 				    (compute-queue-count 0)

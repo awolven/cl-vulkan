@@ -53,16 +53,26 @@
     (call-next-method)
     (values)))
 
+(defmethod required-vulkan-device-extensions ((display vulkan-enabled-display-mixin))
+  (list #-darwin "VK_EXT_line_rasterization"))
+
 (defmethod initialize-instance :before ((instance vulkan-enabled-display-mixin)
 					&rest initargs &key &allow-other-keys)
-  (apply #'setup-vulkan instance initargs)
-  (initialize-buffer-memory-pool instance)
-  (values))
+  (let ((vulkan-device-extensions (getf initargs :vulkan-device-extensions)))
+    (remf initargs :vulkan-device-extensions)
+    (setq vulkan-device-extensions
+	  (append (required-vulkan-device-extensions instance)
+		  vulkan-device-extensions))
+    (apply #'setup-vulkan instance :vulkan-device-extensions vulkan-device-extensions initargs)
+    (initialize-buffer-memory-pool instance)
+    (values)))
 
-(defun setup-vulkan (dpy &rest args &key (compute-queue-count 0)
-				      (wide-lines #+windows t #+(or darwin linux) nil)
-				      (rectangular-lines nil)
-				      (stippled-lines #+windows t #+(or darwin linux) nil)
+(defun setup-vulkan (dpy &rest args
+		     &key (compute-queue-count 0)
+		       (vulkan-device-extensions nil)
+		       (wide-lines #+windows t #+(or darwin linux) nil)
+		       (rectangular-lines nil)
+		       (stippled-lines #+windows t #+(or darwin linux) nil)
 		     &allow-other-keys)
   (let ((vulkan-instance (get-vulkan-instance dpy)))
     (let ((debug-callback (when (debug-report-present? vulkan-instance)
@@ -87,7 +97,8 @@
 	  (let* ((device (apply #'create-logical-device dpy gpu
 				:compute-queue-count compute-queue-count
 				:device-extensions
-				(list VK_KHR_SWAPCHAIN_EXTENSION_NAME #-darwin "VK_EXT_line_rasterization")
+				(list* VK_KHR_SWAPCHAIN_EXTENSION_NAME
+				       vulkan-device-extensions)
 				:rectangular-lines rectangular-lines
 				:stippled-lines stippled-lines
 				:enable-wide-lines wide-lines

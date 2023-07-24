@@ -1,6 +1,7 @@
 (in-package :vk)
 
 (declaim (inline clampf))
+(declaim (inline clampf) (ftype (function (real) single-float) clampf))
 (defun clampf (number)
   "Clamp real number to single-float limits."
   (block nil

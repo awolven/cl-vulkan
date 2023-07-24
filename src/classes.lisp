@@ -310,7 +310,150 @@
     :initarg :variable-multisample-rate)
    (inherited-queries
     :reader has-inherited-queries-p
-    :initarg :inherited-queries)))    
+    :initarg :inherited-queries)
+
+   ;; features Vulkan 1.2
+   (sampler-mirror-clamp-to-edge
+    :reader has-sampler-mirror-clamp-to-edge-p
+    :initarg :sampler-mirror-clamp-to-edge)
+   (draw-indirect-count
+    :reader has-draw-indirect-count-p
+    :initarg :draw-indirect-count)
+   (storage-buffer-8-bit-access
+    :reader has-storage-buffer-8-bit-access-p
+    :initarg :storage-buffer-8-bit-access)
+   (uniform-and-storage-buffer-8-bit-access
+    :reader has-uniform-and-storage-buffer-8-bit-access-p
+    :initarg :uniform-and-storage-buffer-8-bit-access)
+   (storage-push-constant-8
+    :reader has-storage-push-constant-8-p
+    :initarg :storage-push-constant-8)
+   (shader-buffer-int64-atomics
+    :reader has-shader-buffer-int64-atomics-p
+    :initarg :shader-buffer-int64-atomics)
+   (shader-shared-int64-atomics
+    :reader has-shader-shared-int64-atomics
+    :initarg :shader-shared-int64-atomics)
+   (shader-float16
+    :reader has-shader-float16-p
+    :initarg :shader-float16)
+   (shader-int8
+    :reader has-shader-int8-p
+    :initarg :shader-int8)
+   (descriptor-indexing
+    :reader has-descriptor-indexing-p
+    :initarg :descriptor-indexing)
+   (shader-input-attachment-array-dynamic-indexing
+    :reader has-shader-input-attachment-array-dynamic-indexing-p
+    :initarg :shader-input-attachment-array-dynamic-indexing)
+   (shader-uniform-texel-buffer-array-dynamic-indexing
+    :reader has-shader-uniform-texel-buffer-array-dynamic-indexing-p
+    :initarg :shader-uniform-texel-buffer-array-dynamic-indexing)
+   (shader-storage-texel-buffer-array-dynamic-indexing
+    :reader has-shader-storage-texel-buffer-array-dynamic-indexing-p
+    :initarg :shader-storage-texel-buffer-array-dynamic-indexing)
+   (shader-uniform-buffer-array-non-uniform-indexing
+    :reader has-shader-uniform-buffer-array-non-uniform-indexing-p
+    :initarg :shader-uniform-buffer-array-non-uniform-indexing)
+   (shader-sampled-image-array-non-uniform-indexing
+    :reader has-shader-sampled-image-array-non-uniform-indexing-p
+    :initarg :shader-sampled-image-array-non-uniform-indexing)
+   (shader-storage-buffer-array-non-uniform-indexing
+    :reader has-shader-storage-buffer-array-non-uniform-indexing-p
+    :initarg :shader-storage-buffer-array-non-uniform-indexing)
+   (shader-storage-image-array-non-uniform-indexing
+    :reader has-shader-storage-image-array-non-uniform-indexing-p
+    :initarg :shader-storage-image-array-non-uniform-indexing)
+   (shader-input-attachment-array-non-uniform-indexing
+    :reader has-shader-input-attachment-array-non-uniform-indexing-p
+    :initarg :shader-input-attachment-array-non-uniform-indexing)
+   (shader-uniform-texel-buffer-array-non-uniform-indexing
+    :reader has-shader-uniform-texel-buffer-array-non-uniform-indexing-p
+    :initarg :shader-uniform-texel-buffer-array-non-uniform-indexing)
+   (shader-storage-texel-buffer-array-non-uniform-indexing
+    :reader has-shader-storage-texel-buffer-array-non-uniform-indexing-p
+    :initarg :shader-storage-texel-buffer-array-non-uniform-indexing)
+   (descriptor-binding-uniform-buffer-update-after-bind
+    :reader has-descriptor-binding-uniform-buffer-update-after-bind-p
+    :initarg :descriptor-binding-uniform-buffer-update-after-bind)
+   (descriptor-binding-sampled-image-update-after-bind
+    :reader has-descriptor-binding-sampled-image-update-after-bind-p
+    :initarg :descriptor-binding-sampled-image-update-after-bind)
+   (descriptor-binding-storage-image-update-after-bind
+    :reader has-descriptor-binding-storage-image-update-after-bind-p
+    :initarg :descriptor-binding-storage-image-update-after-bind)
+   (descriptor-binding-storage-buffer-update-after-bind
+    :reader has-descriptor-binding-storage-buffer-update-after-bind-p
+    :initarg :descriptor-binding-storage-buffer-update-after-bind)
+   (descriptor-binding-uniform-texel-buffer-update-after-bind
+    :reader has-descriptor-binding-uniform-texel-buffer-update-after-bind-p
+    :initarg :descriptor-binding-uniform-texel-buffer-update-after-bind)
+   (descriptor-binding-storage-texel-buffer-update-after-bind
+    :reader has-descriptor-binding-storage-texel-buffer-update-after-bind-p
+    :initarg :descriptor-binding-storage-texel-buffer-update-after-bind)
+   (descriptor-binding-update-unused-while-pending
+    :reader has-descriptor-binding-update-unused-while-pending-p
+    :initarg :descriptor-binding-update-unused-while-pending)
+   (descriptor-binding-partially-bound
+    :reader has-descriptor-binding-partially-bound-p
+    :initarg :descriptor-binding-partially-bound)
+   (descriptor-binding-variable-descriptor-count
+    :reader has-descriptor-binding-variable-descriptor-count
+    :initarg :descriptor-binding-variable-descriptor-count)
+   (runtime-descriptor-array
+    :reader has-runtime-descriptor-array-p
+    :initarg :runtime-descriptor-array)
+   (sampler-filter-minmax
+    :reader has-sampler-filter-minmax-p
+    :initarg :sampler-filter-minmax)
+   (scalar-block-layout
+    :reader has-scalar-block-layout-p
+    :initarg :scalar-block-layout)
+   (imageless-framebuffer
+    :reader has-imageless-framebuffer-p
+    :initarg :imageless-framebuffer)
+   (uniform-buffer-standard-layout
+    :reader has-uniform-buffer-standard-layout-p
+    :initarg :uniform-buffer-standard-layout)
+   (shader-subgroup-extended-types
+    :reader has-shader-subgroup-extended-types-p
+    :initarg :shader-subgroup-extended-types)
+   (separate-depth-stencil-layouts
+    :reader has-separate-depth-stencil-layouts-p
+    :initarg :separate-depth-stencil-layouts)
+   (host-query-reset
+    :reader has-host-query-reset-p
+    :initarg :host-query-reset)
+   (timeline-semaphore
+    :reader has-timeline-semaphore-p
+    :initarg :timeline-semaphore)
+   (buffer-device-address
+    :reader has-buffer-device-address-p
+    :initarg :buffer-device-address)
+   (buffer-device-address-capture-replay
+    :reader has-buffer-device-address-capture-replay-p
+    :initarg :buffer-device-address-capture-replay)
+   (buffer-device-address-multi-device
+    :reader has-buffer-device-address-multi-device-p
+    :initarg :buffer-device-address-multi-device)
+   (vulkan-memory-model
+    :reader has-vulkan-memory-model-p
+    :initarg :vulkan-memory-model)
+   (vulkan-memory-model-device-scope
+    :reader has-vulkan-memory-model-device-scope-p
+    :initarg :vulkan-memory-model-device-scope)
+   (vulkan-memory-model-availability-visibility-chains
+    :reader has-vulkan-memory-model-availability-visibility-chains-p
+    :initarg :vulkan-memory-model-availability-visibility-chains)
+   (shader-output-viewport-index
+    :reader has-shader-output-viewport-index-p
+    :initarg :shader-output-viewport-index)
+   (shader-output-layer
+    :reader has-shader-output-layer-p
+    :initarg :shader-output-layer)
+   (subgroup-broadcast-dynamic-id
+    :reader has-subgroup-broadcast-dynamic-id-p
+    :initarg :subgroup-broadcast-dynamic-id)))
    
 
 (defclass physical-device-limits ()

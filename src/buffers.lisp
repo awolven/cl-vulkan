@@ -21,6 +21,11 @@
 
 (in-package :vk)
 
+(defcstruct %vk::VkBufferOpaqueCaptureAddressCreateInfo
+  (%vk::sType VKStructureType)
+  (%vk::pNext :pointer)
+  (%vk::opaqueCaptureAddress :uint64))
+
 (defun create-buffer-1 (device size usage &key (allocator +null-allocator+)
 					    (buffer-class 'buffer))
   (with-vk-struct (p-info VkBufferCreateInfo)
@@ -42,30 +47,54 @@
     (vkFreeMemory (h device) (h (allocated-memory buffer)) (h (allocator (allocated-memory buffer)))))
   (values))
 
+(defctype VkMemoryAllocateFlags VkFlags)
+
+(defcstruct %vk::VkMemoryAllocateFlagsInfo
+  (%vk::sType VkStructureType)
+  (%vk::pNext :pointer)
+  (%vk::flags VkMemoryAllocateFlags)
+  (%vk::deviceMask :uint32))
+
+(defconstant %vk::VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO 1000060000)
+(defconstant %vk::VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT #x00000002)
+
 (defun allocate-buffer-memory (device buffer properties &key (allocator +null-allocator+))
   (with-vk-struct (p-requirements VkMemoryRequirements)
     (vkGetBufferMemoryRequirements (h device) (h buffer) p-requirements)
-    
-    (with-vk-struct (p-alloc-info VkMemoryAllocateInfo)
-      (with-foreign-slots ((%vk::allocationSize
-			                %vk::memoryTypeIndex)
-			               p-alloc-info
-			               (:struct VkMemoryAllocateInfo))
-	    (setf %vk::allocationSize
-	          (foreign-slot-value p-requirements '(:struct VkMemoryRequirements) '%vk::size)
-	          %vk::memoryTypeIndex
-	          (find-memory-type
-	           (physical-device device)
-	           (foreign-slot-value p-requirements '(:struct VkMemoryRequirements) '%vk::memoryTypeBits)
-	           properties)))
-      (with-foreign-object (p-buffer-memory 'VkDeviceMemory)
+
+    (with-foreign-object (p-alloc-flags-info '(:struct %vk::VkMemoryAllocateFlagsInfo))
+      (with-foreign-slots ((%vk::sType
+			    %vk::pNext
+			    %vk::flags
+			    %vk::deviceMask)
+			   p-alloc-flags-info
+			   (:struct %vk::VkMemoryAllocateFlagsInfo))
+	(setf %vk::sType %vk::VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO
+	      %vk::pNext (null-pointer)
+	      %vk::flags %vk::VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT
+	      %vk::deviceMask 0))
+      (with-vk-struct (p-alloc-info VkMemoryAllocateInfo)
+	(with-foreign-slots ((%vk::allocationSize
+			      %vk::memoryTypeIndex
+			      %vk::pNext)
+			     p-alloc-info
+			     (:struct VkMemoryAllocateInfo))
+	  (setf %vk::allocationSize
+		(foreign-slot-value p-requirements '(:struct VkMemoryRequirements) '%vk::size)
+		%vk::memoryTypeIndex
+		(find-memory-type
+		 (physical-device device)
+		 (foreign-slot-value p-requirements '(:struct VkMemoryRequirements) '%vk::memoryTypeBits)
+		 properties)
+		%vk::pNext p-alloc-flags-info)
+	  (with-foreign-object (p-buffer-memory 'VkDeviceMemory)
 	    (check-vk-result (vkAllocateMemory (h device) p-alloc-info (h allocator) p-buffer-memory))
 	    (make-instance 'allocated-memory :handle (mem-aref p-buffer-memory 'VkDeviceMemory)
-		                                 :device device
-		                                 :allocator allocator
-		                                 :alignment (foreign-slot-value p-requirements
-						                                                '(:struct VkMemoryRequirements)
-						                                                '%vk::alignment))))))
+		                             :device device
+		                             :allocator allocator
+		                             :alignment (foreign-slot-value p-requirements
+						                            '(:struct VkMemoryRequirements)
+						                            '%vk::alignment))))))))
 
 (defun bind-buffer-memory (device buffer buffer-memory &optional (offset 0))
   (vkBindBufferMemory (h device) (h buffer) (h buffer-memory) offset))

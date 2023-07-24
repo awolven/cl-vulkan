@@ -22,6 +22,8 @@
 
 (defclass memory-pool (memory-pool-mixin) ())
 
+(defconstant VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT #x00020000)
+
 (defmethod initialize-instance :before ((instance memory-pool-mixin) &rest initargs
                                         &key device
                                           (properties
@@ -31,7 +33,9 @@
   (setf (memory-pool-device instance) device)
   (let* ((usage (logior VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
 			VK_BUFFER_USAGE_INDEX_BUFFER_BIT
-			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+			VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT))
 	 (test-buffer (create-buffer-1 device (aligned-size 1) usage)))
     (with-vk-struct (p-requirements VkMemoryRequirements)
       (vkGetBufferMemoryRequirements (h device) (h test-buffer) p-requirements)
@@ -131,7 +135,9 @@
 	
 	(let* ((usage (logior VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
 			      VK_BUFFER_USAGE_INDEX_BUFFER_BIT
-			      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+			      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+			      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT))
 	       (buffer (create-buffer-1 device actual-size usage)))
 	  (with-vk-struct (p-requirements VkMemoryRequirements)
 	    (vkGetBufferMemoryRequirements (h device) (h buffer) p-requirements)

@@ -242,20 +242,16 @@
 	(vkDestroySwapchainKHR (h device) (h swapchain) (h allocator)))))
   (values))
 
-(defun frame-begin (swapchain render-pass current-frame clear-value command-pool)
-  (declare (ignore command-pool))
+(defun wait-for-fence (swapchain current-frame)
   (let* ((device (device swapchain))
 	 (frame-resource (elt (frame-resources swapchain) current-frame))
-	 (command-buffer (frame-command-buffer frame-resource))
-	 (fence (fence frame-resource))
-	 (present-complete-sem (present-complete-semaphore frame-resource))
-	 (image-index))
+	 (fence (fence frame-resource)))
 
     (with-foreign-object (p-fence 'VkFence)
       (setf (mem-aref p-fence 'VkFence) (h fence))
       
       (tagbody
-
+	 
        continue
 	 (let ((result (vkWaitForFences (h device) 1 p-fence VK_TRUE 100)))
            ;; probably can set wait time to uint32 max and eliminate this tagbody
@@ -265,12 +261,26 @@
 	     (go continue))
 	   (check-vk-result result))
 
-       break
+       break))))
 
-         (check-vk-result (vkResetFences (h device) 1 p-fence))
-         (check-vk-result (vkResetCommandBuffer (h command-buffer)
-                                                VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT))
-	 ))
+
+(defun frame-begin (swapchain render-pass current-frame clear-value command-pool)
+  (declare (ignore command-pool))
+  (let* ((device (device swapchain))
+	 (frame-resource (elt (frame-resources swapchain) current-frame))
+	 (command-buffer (frame-command-buffer frame-resource))
+	 (present-complete-sem (present-complete-semaphore frame-resource))
+	 (image-index)
+	 (fence (fence frame-resource)))
+
+    (wait-for-fence swapchain current-frame)
+
+    (with-foreign-object (p-fence 'VkFence)
+      (setf (mem-aref p-fence 'VkFence) (h fence))
+      (check-vk-result (vkResetFences (h device) 1 p-fence)))
+    
+    (check-vk-result (vkResetCommandBuffer (h command-buffer)
+					   VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT))
 
     (with-foreign-object (p-back-buffer-index :uint32)
       (check-vk-result (vkAcquireNextImageKHR (h device)
@@ -399,7 +409,7 @@
 
     ;; execute the command buffer
     (queue-submit queue current-command-buffer present-complete-sem render-complete-sem fence)
-    
+
     (values)))
 
 (defun frame-present (swapchain queue current-frame image-index window)

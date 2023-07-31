@@ -23,6 +23,14 @@
 
 (defvar *vulkan-instance* nil)
 
+(defmethod get-required-instance-extensions ((system-object t))
+  #+linux
+  (get-x11-required-instance-extensions)
+  #+darwin
+  (get-cocoa-required-instance-extensions)
+  #+win32
+  (get-win32-required-instance-extensions))
+
 (defun get-vulkan-instance (&optional system-object)
   (if *vulkan-instance*
       *vulkan-instance*

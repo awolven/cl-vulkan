@@ -1,5 +1,9 @@
 (in-package :vk)
 
+(defun get-win32-required-instance-extensions ()
+  (list (symbol-value (intern "VK_KHR_SURFACE_EXTENSION_NAME" :vk))
+	(symbol-value (intern "VK_KHR_WIN32_SURFACE_EXTENSION_NAME" :vk))))
+
 #|
 // Provided by VK_KHR_win32_surface
 typedef struct VkWin32SurfaceCreateInfoKHR {

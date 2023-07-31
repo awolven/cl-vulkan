@@ -1,4 +1,11 @@
 (in-package :vk)
+
+(defun get-cocoa-required-instance-extensions ()
+  (list "VK_KHR_surface"
+	(if (symbol-value (intern (symbol-name '*use-metal-surface*) :vk))
+	    "VK_EXT_metal_surface"
+	    "VK_MVK_macos_surface")))
+
 #+objc
 (named-readtables:in-readtable :objc-readtable)
 

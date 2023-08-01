@@ -165,11 +165,17 @@
   (setf (swapchain window) swapchain)
   (setf (images swapchain) (get-swapchain-images-khr swapchain))
   (setf (color-image-views swapchain) (create-image-views swapchain))
-  (setf (depth-image swapchain) (create-depth-image (device swapchain)
-						    (fb-width swapchain)
-						    (fb-height swapchain)))
-  (setf (depth-image-view swapchain) (create-depth-image-view (device swapchain)
-							      (depth-image swapchain)))
+  (setf (depth-images swapchain) (list (create-depth-image (device swapchain) ;; 3d-depth image
+							   (fb-width swapchain)
+							   (fb-height swapchain))
+				       (create-depth-image (device swapchain) ;; 2d-depth image
+							   (fb-width swapchain)
+							   (fb-height swapchain))))
+  (setf (depth-image-views swapchain) (list (create-depth-image-view (device swapchain)
+								     (first (depth-images swapchain)))
+					    (create-depth-image-view (device swapchain)
+								     (second (depth-images swapchain)))))
+					    
   swapchain)
 
 (defun destroy-swapchain-resources (swapchain)
@@ -177,13 +183,13 @@
 
     (device-wait-idle device)
 
-    (when (depth-image-view swapchain)
-      (destroy-image-view (depth-image-view swapchain))
-      (setf (depth-image-view swapchain) nil))
+    (when (depth-image-views swapchain)
+      (mapcar #'destroy-image-view (depth-image-views swapchain))
+      (setf (depth-image-views swapchain) nil))
 
-    (when (depth-image swapchain)
-      (destroy-image (depth-image swapchain))
-      (setf (depth-image swapchain) nil))
+    (when (depth-images swapchain)
+      (mapcar #'destroy-image (depth-images swapchain))
+      (setf (depth-images swapchain) nil))
 
     (when (color-image-views swapchain)
       (loop for image-view across (color-image-views swapchain)
@@ -346,7 +352,7 @@
 			   p-info
 			   (:struct VkRenderPassBeginInfo))
 
-	(with-foreign-object (p-clear-values '(:union VkClearValue) 2)
+	(with-foreign-object (p-clear-values '(:union VkClearValue) 3)
 	  (setf (mem-aref (mem-aptr p-clear-values '(:union VkClearValue) 0) :float 0) (elt clear-value 0)
 		(mem-aref (mem-aptr p-clear-values '(:union VkClearValue) 0) :float 1) (elt clear-value 1)
 		(mem-aref (mem-aptr p-clear-values '(:union VkClearValue) 0) :float 2) (elt clear-value 2)
@@ -361,6 +367,20 @@
 		 
 		(foreign-slot-value
 		 (foreign-slot-pointer (mem-aptr p-clear-values '(:union VkClearValue) 1)
+				       '(:union VkClearValue)
+				       '%vk::depthStencil)
+		 '(:struct VkClearDepthStencilValue)
+		 '%vk::stencil) 0
+
+		 (foreign-slot-value
+		 (foreign-slot-pointer (mem-aptr p-clear-values '(:union VkClearValue) 2)
+				       '(:union VkClearValue)
+				       '%vk::depthStencil)
+		 '(:struct VkClearDepthStencilValue)
+		 '%vk::depth) 1.0f0
+		 
+		(foreign-slot-value
+		 (foreign-slot-pointer (mem-aptr p-clear-values '(:union VkClearValue) 2)
 				       '(:union VkClearValue)
 				       '%vk::depthStencil)
 		 '(:struct VkClearDepthStencilValue)
@@ -383,7 +403,7 @@
 		 '(:struct VkExtent2D)
 		 '%vk::height) (fb-height swapchain)
 		 		  
-		%vk::clearValueCount 2
+		%vk::clearValueCount 3
 		%vk::pClearValues p-clear-values)
 	  
 	  (vkCmdBeginRenderPass (h command-buffer) p-info VK_SUBPASS_CONTENTS_INLINE))))

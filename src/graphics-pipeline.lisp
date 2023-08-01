@@ -141,8 +141,8 @@
 				     :attachment-count 1
 				     args)
 			      (let ((dynamic-state-count
-				      #-(or darwin linux) 4
-				      #+(or darwin linux) 2))
+				      #-(or darwin) 4
+				      #+(or darwin) 2))
 				(with-dynamic-states (p-dynamic-states dynamic-state-count)
 
 				  (setf (mem-aref p-dynamic-states 'VkDynamicState 0) VK_DYNAMIC_STATE_VIEWPORT

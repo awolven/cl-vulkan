@@ -73,8 +73,8 @@
 					     (mem-aptr p-subpasses '(:struct VkSubpassDescription) i)
 					     (:struct VkSubpassDescription))
 			  (let* ((color-attachment-references (color-attachments subpass))
-				 (reference-count (length color-attachment-references)))
-			    (let ((p-attachment-refs (foreign-alloc '(:struct VkAttachmentReference) :count reference-count)))
+				 (color-reference-count (length color-attachment-references)))
+			    (let ((p-attachment-refs (foreign-alloc '(:struct VkAttachmentReference) :count color-reference-count)))
 			      (push p-attachment-refs pointers)
 			      (loop for reference in color-attachment-references for i from 0
 				    do (%vk::zero-struct (mem-aptr p-attachment-refs '(:struct VkAttachmentReference) i) '(:struct VkAttachmentReference))
@@ -84,12 +84,12 @@
 					 (setf %vk::attachment (position reference color-attachments :key #'attachment-name)
 					       %vk::layout (reference-layout (find reference color-attachments :key #'attachment-name)))))
 			      (let* ((depth-attachment-references (depth-attachments subpass))
-				     (reference-count (length depth-attachment-references))
-				     (p-depth-attachment-refs (foreign-alloc '(:struct VkAttachmentReference) :count reference-count)))
+				     (depth-reference-count (length depth-attachment-references))
+				     (p-depth-attachment-refs (foreign-alloc '(:struct VkAttachmentReference) :count depth-reference-count)))
+				(push p-depth-attachment-refs pointers)
 				(loop for reference in depth-attachment-references
 				      do (let ((p-depth-attachment-ref (mem-aptr p-depth-attachment-refs '(:struct VkAttachmentReference) i)))
 					   (zero-struct p-depth-attachment-ref '(:struct VkAttachmentReference))
-					   (push p-depth-attachment-ref pointers)
 					   (with-foreign-slots ((%vk::attachment %vk::layout)
 								p-depth-attachment-ref
 								(:struct VkAttachmentReference))
@@ -97,7 +97,7 @@
 						   %vk::layout (reference-layout (find reference depth-attachments :key #'attachment-name))))
 		       
 					   (setf %vk::pipelineBindPoint (pipeline-bind-point subpass)
-						 %vk::colorAttachmentCount reference-count
+						 %vk::colorAttachmentCount color-reference-count
 						 %vk::pColorAttachments p-attachment-refs
 						 %vk::pDepthStencilAttachment p-depth-attachment-ref))))))))
 

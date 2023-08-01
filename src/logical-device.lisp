@@ -50,7 +50,7 @@
 				    (enable-depth-bias-clamp nil)
 				    (enable-fill-mode-non-solid nil)
 				    (enable-depth-bounds nil)
-				    (enable-wide-lines nil)
+				    (enable-wide-lines t)
 				    (enable-large-points t)
 				    (enable-alpha-to-one nil)
 				    (enable-multi-viewport nil)

@@ -70,9 +70,9 @@
 (defun setup-vulkan (dpy &rest args
 		     &key (compute-queue-count 0)
 		       (vulkan-device-extensions nil)
-		       (wide-lines #+windows t #+(or darwin linux) nil)
+		       (wide-lines #+(or windows linux) t #+(or darwin) nil)
 		       (rectangular-lines nil)
-		       (stippled-lines #+windows t #+(or darwin linux) nil)
+		       (stippled-lines #+(or windows linux) t #+(or darwin) nil)
 		     &allow-other-keys)
   (let ((vulkan-instance (get-vulkan-instance dpy)))
     (let ((debug-callback (when (debug-report-present? vulkan-instance)

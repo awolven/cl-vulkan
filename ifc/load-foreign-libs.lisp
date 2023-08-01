@@ -54,6 +54,14 @@
 (sb-posix:setenv "VK_ICD_FILENAMES"
 		 (concatenate 'string *home-dir* "/swiftshader-build1/Linux/vk_swiftshader_icd.json") 0)
 
+#+(and linux sbcl)
+(let ((vulkan-sdk-path (concatenate 'string *home-dir* "vulkan/1.3.231.0/x86_64")))
+  (sb-posix:setenv "VULKAN_SDK" vulkan-sdk-path 0)
+  (sb-posix:setenv "VK_ADD_LAYER_PATH" (concatenate 'string vulkan-sdk-path "/etc/vulkan/explicit_layer.d") 0)
+  (sb-posix:setenv "VK_INSTANCE_LAYERS" "VK_LAYER_KHRONOS_validation" 0))
+  
+  
+
 #+glfw
 (cffi:define-foreign-library glfw3
   (:darwin "libglfw.3.dylib")

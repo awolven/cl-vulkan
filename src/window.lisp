@@ -55,26 +55,7 @@
       (recreate-swapchain window (render-pass window) (swapchain window) width height)
       (values))))
 
-;; this is a callback which happens after the native platfrom window has been created but before events start to happen
-(defmethod clui::initialize-window-devices ((window vulkan-window-mixin) &rest args &key width height &allow-other-keys)
-  (let* ((device (default-logical-device (clui::window-display window)))
-	 (surface (create-window-surface device window)))
-    (let* ((surface-format (find-supported-format
-			    surface
-			    :requested-image-format (window-desired-format window)
-			    :requested-color-space (window-desired-color-space window)))
-           (present-mode (get-physical-device-surface-present-mode (paired-gpu surface) surface))
-	   (render-pass (create-render-pass device (surface-format-format surface-format))))
-      
-      (setf (render-pass window) render-pass)
 
-      (let ((swapchain (create-swapchain device window width height surface-format present-mode)))
-
-      (setup-framebuffers device render-pass swapchain)
-      
-      (create-frame-resources swapchain (queue-family-index surface))
-      
-      (values)))))
 
 (defmethod destroy-os-window ((window vulkan-window))
   (let* ((app (application window))

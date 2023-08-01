@@ -30,7 +30,7 @@
 (defun create-framebuffer (device render-pass swapchain index &key (allocator +null-allocator+))
   (with-foreign-object (p-attachments 'VkImageView 2)
     (setf (mem-aref p-attachments 'VkImageView 0) (h (elt (color-image-views swapchain) index))
-	  (mem-aref p-attachments 'VkImageView 1) (h (depth-image-view swapchain)))
+	  (mem-aref p-attachments 'VkImageView 1) (h (first (depth-image-views swapchain))))
 	 
     (with-vk-struct (p-info VkFramebufferCreateInfo)
       (with-foreign-slots ((%vk::renderPass
@@ -51,13 +51,40 @@
 	  (check-vk-result
 	   (vkCreateFramebuffer (h device) p-info (h allocator) p-framebuffer))
 	  (make-instance 'framebuffer :handle (mem-aref p-framebuffer 'VkFramebuffer)
-			 :device device :allocator allocator))))))
+				      :device device :allocator allocator))))))
+
+(defun create-framebuffer2 (device render-pass swapchain index &key (allocator +null-allocator+))
+  (with-foreign-object (p-attachments 'VkImageView 3)
+    (setf (mem-aref p-attachments 'VkImageView 0) (h (elt (color-image-views swapchain) index))
+	  (mem-aref p-attachments 'VkImageView 1) (h (first (depth-image-views swapchain)))
+	  (mem-aref p-attachments 'VkImageView 2) (h (second (depth-image-views swapchain))))
+	 
+    (with-vk-struct (p-info VkFramebufferCreateInfo)
+      (with-foreign-slots ((%vk::renderPass
+			    %vk::attachmentCount
+			    %vk::pAttachments
+			    %vk::width
+			    %vk::height
+			    %vk::layers)
+			   p-info (:struct VkFramebufferCreateInfo))
+	(setf %vk::renderPass (h render-pass)
+	      %vk::attachmentCount 3
+	      %vk::pAttachments p-attachments
+	      %vk::width (fb-width swapchain)
+	      %vk::height (fb-height swapchain)
+	      %vk::layers 1)
+		
+	(with-foreign-object (p-framebuffer 'VkFramebuffer)
+	  (check-vk-result
+	   (vkCreateFramebuffer (h device) p-info (h allocator) p-framebuffer))
+	  (make-instance 'framebuffer :handle (mem-aref p-framebuffer 'VkFramebuffer)
+				      :device device :allocator allocator))))))
 
 (defun setup-framebuffers (device render-pass swapchain &key (allocator +null-allocator+))
   (let* ((count (length (images swapchain)))
 	 (array (make-array count)))
     (loop for i from 0 below count
-       do (setf (elt array i) (create-framebuffer device render-pass swapchain i :allocator allocator))
+       do (setf (elt array i) (create-framebuffer2 device render-pass swapchain i :allocator allocator))
        finally (setf (framebuffers swapchain) array)))
   (values))
 

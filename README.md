@@ -1,20 +1,12 @@
 # cl-vulkan
-Vulkan bindings for Common Lisp with simple demo.
+Vulkan bindings for Common Lisp.
 
-cl-vulkan is the new name for the vulkan-only portion of VkTk.  It extensibly wraps some of the most important Vulkan objects to run a sample application.  It includes glfw3 bindings.  It was developed and tested with SBCL.  The vulkan loader and libglfw3 are required to be present.  On Windows, cl-vulkan has been tested with an Nvidia hardware.  On macos, cl-vulkan has been tested with MoltenVK (included with the Vulkan SDK).  On Linux, a virtual machine was used, so cl-vulkan has been tested with Swiftshader software Vulkan emulation.  This cl-vulkan supersedes 3b's cl-vulkan, but uses a modified part of the bindings generator from that project.
+cl-vulkan currently supports SBCL and Clozure Common Lisp on Microsoft Windows, Linux and MacOS.
 
-Also, cl-vulkan demo requires projects 3d-vectors and 3d-matrices.  Both cl-vulkan and cl-vulkan demo require cffi.
+cl-vulkan currently supports Vulkan 1.0 and 1.2, including compute pipelines.  Vulkan 1.1 and 1.3 are coming soon.  It is known to work on Nvidia, AMD, and Intel GPUs both discrete and integrated varieties.  It has also been tested with Swiftshader Vulkan emulator.  cl-vulkan requires the MoltenVK client driver on MacOS.  cl-vulkan is intended only to be bindings plus Common Lisp convenience layer for using Vulkan.  It has a rudimentary device memory pool but one is not required to use that.  The demo has been removed, and as a user of cl-vulkan it is expected that you know something about Vulkan and about Common Lisp and therefore will know how to employ the bindings.  Refer to the Khronos Vulkan documentation or a Vulkan tutorial for usage.
 
-To run cl-vulkan, clone the repository.
+cl-vulkan relies on CLUI to provide OS Windowing support.  If you have a need to run compute pipelines entirely headless, please contact the author of cl-vulkan to enable support for that.  cl-vulkan has been run with GLFW3 and would only require minor changes to make it use GLFW/GLUT/SDL or equivalent if those are your requirements.
 
-In SBCL:
+If you are looking for a cross-platform Common Lisp library which can readily draw graphics on the screen out of the box, take a look at KRMA instead: https://github.com/awolven/krma.git.
 
-`(push "~/cl-vulkan/" asdf:*central-registry*)`
-
-`(asdf:oos 'asdf:load-op :cl-vulkan-demo)`
-
-`(cl-vulkan-demo::run)`
-
-If this does not work check to make sure load-foreign-libs.lisp has the right settings.
-
-Enjoy!
+You must edit the file ifc/load-foreign-libs.lisp to use the Vulkan SDK.  

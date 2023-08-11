@@ -56,6 +56,8 @@
       (values))))
 
 
+(defmethod clui::destroy-window ((window vulkan-window))
+  (destroy-os-window window))
 
 (defmethod destroy-os-window ((window vulkan-window))
   (let* ((app (application window))

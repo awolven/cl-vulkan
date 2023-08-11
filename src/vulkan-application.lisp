@@ -18,13 +18,10 @@
 ;; LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 ;; OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 ;; WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 (in-package :vk)
+
 (defmethod shutdown-application ((dpy vulkan-enabled-display-mixin))
-  (let* ((window (main-window dpy))
-	 (swapchain (swapchain window))
-	 (device (device swapchain))
-	 (queue-family-index (queue-family-index (render-surface window))))
+  (let* ((device (default-logical-device dpy)))
 
     (device-wait-idle device)
 
@@ -34,23 +31,20 @@
                              vk::VK_NULL_HANDLE
                              +nullptr+)
 
-    (destroy-swapchain swapchain)
+    (let ((command-pools (command-pools device)))
+      (mapcar #'(lambda (cons)
+		  (let ((command-pool (cadr cons)))
+		    (when command-pool
+		      (loop for command-buffer across (command-buffers command-pool)
+			    do (free-command-buffer command-buffer)
+			    finally (setf (fill-pointer (command-buffers command-pool)) 0))
+		      (destroy-command-pool command-pool))))
+	      command-pools))
 
-    (let ((command-pool (find-command-pool device queue-family-index)))
-      (when command-pool
-	(loop for command-buffer across (command-buffers command-pool)
-	      do (free-command-buffer command-buffer)
-	      finally (setf (fill-pointer (command-buffers command-pool)) 0))
+    (when (next-method-p)
+      (call-next-method))
 
-	(destroy-command-pool command-pool)))
-
-    (vkDestroySurfaceKHR (h (instance (render-surface window)))
-                         (h (render-surface window))
-                         (h (allocator (instance (render-surface window)))))
-    (destroy-os-window window)
-    (destroy-vulkan-instance (instance device))
-    (poll-application-events dpy) ;; bug in glfw3.3 on macosx mojave.
-    (call-next-method)
+    (vkDestroyDevice (h device) (h (allocator device))) 
     (values)))
 
 (defmethod required-vulkan-device-extensions ((display vulkan-enabled-display-mixin))

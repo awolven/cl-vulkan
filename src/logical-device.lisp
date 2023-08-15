@@ -74,7 +74,7 @@
 				    (enable-shader-storage-image-array-dynamic-indexing nil)
 				    (enable-shader-clip-distance nil)
 				    (enable-shader-cull-distance nil)
-				    (enable-shader-float64 t)
+				    (enable-shader-float64 nil)
 				    (enable-shader-int64 t)
 				    (enable-shader-int16 nil)
 				    (enable-shader-resource-residency nil)

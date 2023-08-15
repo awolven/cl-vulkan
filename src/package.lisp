@@ -24,7 +24,7 @@
 (cl:defpackage :vk
   (:use :cl :cffi :cffi-sys :%vk #+glfw :$glfw)
 
-  #+noglfw(:import-from :clui #:h #:handle-mixin #:handle)
+  #-glfw(:import-from :clui #:h #:handle-mixin #:handle)
   
   (:export #:vulkan-enabled-display-mixin
 	   #:VK_WHOLE_SIZE

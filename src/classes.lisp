@@ -116,7 +116,7 @@
    (image-index :initform 0)
    (current-frame :initform 0)))
 
-#+noglfw
+#-glfw
 (defclass vulkan-helper-window (clui::handle-mixin)
   ((surface :initform nil :accessor render-surface)
    (surface-format :initform nil :accessor surface-format)

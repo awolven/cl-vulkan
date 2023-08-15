@@ -45,7 +45,7 @@ typedef struct VkXlibSurfaceCreateInfoKHR {
 
 (defconstant VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR 1000004000)
 
-#+noglfw
+#-glfw
 (defun create-x11-window-surface (display instance window allocator)
   (let ((err))
     (cffi:with-foreign-object (p-surface 'vk::VkSurfaceKHR)

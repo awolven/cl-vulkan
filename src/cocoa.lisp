@@ -44,7 +44,7 @@ typedef struct VkMacOSSurfaceCreateInfoMVK {
 
 (defvar *use-metal-surface* nil)
 
-#+noglfw
+#-glfw
 (defun create-cocoa-window-surface (window allocator)
   (let ((instance (get-vulkan-instance nil)))
     (with-foreign-object (p-surface 'VkSurfaceKHR)

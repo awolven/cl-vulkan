@@ -237,7 +237,7 @@
 	
 	(loop until (try-recreate)
 	   do #+glfw(glfwWaitEvents)
-	     #+noglfw(clui::wait-events (clui::window-display window)))
+	     #-glfw(clui::wait-events (clui::window-display window)))
 	(values))))
 
 (defun destroy-swapchain (swapchain)

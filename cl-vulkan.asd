@@ -21,18 +21,17 @@
 
 ;; todo: this should be in :objc-runtime system
 ;; but for now I don't want to fork that system
-#+(and darwin noglfw)(cl:pushnew :objc cl:*features*)
-#-noglfw(cl:pushnew :glfw cl:*features*)
+#+(and darwin (not glfw))(cl:pushnew :objc cl:*features*)
 
 (defsystem cl-vulkan
   :description "Bindings for using Vulkan with Common Lisp"
-  :depends-on (:cffi :bordeaux-threads #+noglfw :clui)
+  :depends-on (:cffi :bordeaux-threads #-glfw :clui)
   :author "Andrew K Wolven <awolven@gmail.com>"
   :components
   ((:file "features")
-   #-noglfw(:file "ifc/glfw/package")
-   #-noglfw(:file "ifc/glfw/glfw")
-   #-noglfw(:file "ifc/glfw/abstract-os-compat")
+   #+glfw(:file "ifc/glfw/package")
+   #+glfw(:file "ifc/glfw/glfw")
+   #+glfw(:file "ifc/glfw/abstract-os-compat")
    (:file "ifc/vulkan/package")
    (:file "ifc/vulkan/vk-types")
    (:file "ifc/vulkan/s-type-table")

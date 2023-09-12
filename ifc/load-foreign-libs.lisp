@@ -27,8 +27,10 @@
 (defparameter *cl-vulkan-dir*
   (namestring (asdf/system:system-relative-pathname :cl-vulkan "")))
 
-#+(and sbcl darwin)
-(let ((vulkan-sdk-path (concatenate 'string *home-dir* "/VulkanSDK/1.3.231.1/macOS")))
+;; install vulkansdk systemwide using sudo ./install_vulkan.py from the Vulkan SDK folder
+;; and set vk::*debug* to t or positive integer before creating vulkan instance to get validation layers
+#+(and sbcl darwin nil)
+(let ((vulkan-sdk-path (concatenate 'string *home-dir* "/VulkanSDK/1.3.261.1/macOS")))
   
   (sb-posix:setenv "VULKAN_SDK" vulkan-sdk-path 0)
   (sb-posix:setenv "DYLD_LIBRARY_PATH" (concatenate 'string (sb-posix:getenv "DYLD_LIBRARY_PATH") ":" vulkan-sdk-path "/lib") 0)
@@ -40,7 +42,7 @@
   ;;  (sb-posix:setenv "DYLD_FRAMEWORK_PATH" (concatenate 'string vulkan-sdk-path "/Frameworks") 0)
   )
 
-#+(and ccl darwin)
+#+(and ccl darwin nil)
 (let ((vulkan-sdk-path (concatenate 'string *home-dir* "/VulkanSDK/1.3.231.1/macOS")))
   
   (setf (uiop/os:getenv "VULKAN_SDK") vulkan-sdk-path)

@@ -227,7 +227,7 @@
 				     (progn
 				       (setq result (try-create-inst :validation t :debug t))
 				       (if (eq result VK_ERROR_LAYER_NOT_PRESENT)
-					   (progn (warn "Trying to create vulkan instance with VK_LAYER_LUNARG_STANDARD_VALIDATION failed, falling back...")
+					   (progn (warn "Trying to create vulkan instance with VK_LAYER_KHRONOS_validation failed, falling back...")
 						  (setq result (try-create-inst :debug t))
 						  (if (eq result VK_ERROR_EXTENSION_NOT_PRESENT)
 						      (progn

@@ -20,7 +20,7 @@
 ;; WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 (in-package :vk)
 
-(defmethod shutdown-application ((dpy vulkan-enabled-display-mixin))
+(defmethod shutdown-display ((dpy vulkan-enabled-display-mixin))
   (let* ((device (default-logical-device dpy)))
 
     (device-wait-idle device)

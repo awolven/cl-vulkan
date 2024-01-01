@@ -28,6 +28,7 @@
   (format *error-output* "GLFW Error: ~A: ~A~%" error (foreign-string-to-lisp description))
   (values))
 
+#+NIL
 (defcallback window-close-callback :void ((window :pointer))
   (glfwSetWindowShouldClose window GLFW_TRUE)
   (values))
@@ -40,10 +41,7 @@
   (gethash handle (window-registry *app*)
 	:key #'h :test #'pointer-eq))
 
-(defmethod default-window-class-for-application ((app vulkan-application-mixin))
-  'vulkan-window)
-
-(defmethod clui::handle-event ((window vulkan-window-mixin) (event clui::window-resize-event-mixin))
+(defmethod clim:handle-event ((window vulkan-window-mixin) (event clui::window-resize-event-mixin))
   (let ((width (clui::window-resize-event-new-width event))
 	(height (clui::window-resize-event-new-height event)))
     (unless (or (zerop width) (zerop height))

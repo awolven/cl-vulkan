@@ -130,7 +130,7 @@
 	(device (memory-pool-device memory-pool)))
     (or (loop for memory-resource in (memory-pool-custom-free memory-pool)
 	   when (>= (memory-resource-size memory-resource) actual-size)
-	   do (setf (memory-pool-custom-free memory-pool) (delete memory-resource (memory-pool-custom-free memory-pool)))
+	     do (setf (memory-pool-custom-free memory-pool) (delete memory-resource (memory-pool-custom-free memory-pool)))
 	     (return (setf (gethash memory-resource (slot-value memory-pool 'allocated)) memory-resource)))
 	
 	(let* ((usage (logior VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
@@ -192,7 +192,7 @@
 
 (defun get-buffer-counts (max-size)
   (loop for i from 11 to 29 by 2
-     for n in '(8 12 0 8 0 8 8 8 6)
+     for n in '(1536 128 512 8 0 8 6 4 3)
      with sum = 0
      with next
      with collection = ()
@@ -323,6 +323,48 @@
 	    ((<= size *obscene-buffer-size*)
 	     (%acquire-memory-obscene memory-pool)))
       (%acquire-memory-custom-sized memory-pool size)))
+
+(defun release-memory-resource-2 (memory-pool memory-resource)
+  (when (typecase memory-resource
+	  (memory-resource-miniscule
+	   (push memory-resource (memory-pool-miniscule-free memory-pool))
+	   t)
+	  (memory-resource-tiny
+	   (push memory-resource (memory-pool-tiny-free memory-pool))
+	   t)
+	  (memory-resource-small
+	   (push memory-resource (memory-pool-small-free memory-pool))
+	   t)
+	  (memory-resource-regular
+	   (push memory-resource (memory-pool-regular-free memory-pool))
+	   t)
+	  (memory-resource-medium
+	   (push memory-resource (memory-pool-medium-free memory-pool))
+	   t)
+	  (memory-resource-large
+	   (push memory-resource (memory-pool-large-free memory-pool))
+	   t)	     
+	  (memory-resource-very-large
+	   (push memory-resource (memory-pool-very-large-free memory-pool))
+	   t)
+	  (memory-resource-huge
+	   (push memory-resource (memory-pool-huge-free memory-pool))
+	   t)
+	  (memory-resource-gigantic
+	   (push memory-resource (memory-pool-gigantic-free memory-pool))
+	   t)
+	  (memory-resource-ginormous
+	   (push memory-resource (memory-pool-ginormous-free memory-pool))
+	   t)
+	  (memory-resource-obscene
+	   (push memory-resource (memory-pool-obscene-free memory-pool))
+	   t)
+	  (memory-resource-custom
+	   (push memory-resource (memory-pool-custom-free memory-pool))
+	   t)
+	  (t (warn "~S is not a known memory-resource type" memory-resource)))
+    (remhash memory-resource (slot-value memory-pool 'allocated))
+    (values)))
 
 (defun release-memory-resource (dpy memory-resource)
   (let ((memory-pool (memory-pool dpy)))

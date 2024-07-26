@@ -22,6 +22,7 @@ typedef struct VkWin32SurfaceCreateInfoKHR {
   (hinstance :pointer)
   (hwnd :pointer))
 
+#+NIL
 (defconstant VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR 1000009000)
 
 (defun create-win32-window-surface (instance window allocator)

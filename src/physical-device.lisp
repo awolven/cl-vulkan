@@ -657,3 +657,15 @@
 							)))
 				   (setf (queue-families gpu) (get-physical-device-queue-family-properties gpu))
 				   gpu))))))))))))))
+
+(defun get-max-usable-sample-count (gpu)
+  (let ((count (logand (slot-value gpu 'framebuffer-color-sample-counts)
+		       (slot-value gpu 'framebuffer-depth-sample-counts))))
+    (cond ((logtest count VK_SAMPLE_COUNT_64_BIT) VK_SAMPLE_COUNT_64_BIT)
+	  ((logtest count VK_SAMPLE_COUNT_32_BIT) VK_SAMPLE_COUNT_32_BIT)
+	  ((logtest count VK_SAMPLE_COUNT_16_BIT) VK_SAMPLE_COUNT_16_BIT)
+	  ((logtest count VK_SAMPLE_COUNT_8_BIT) VK_SAMPLE_COUNT_8_BIT)
+	  ((logtest count VK_SAMPLE_COUNT_4_BIT) VK_SAMPLE_COUNT_4_BIT)
+	  ((logtest count VK_SAMPLE_COUNT_2_BIT) VK_SAMPLE_COUNT_2_BIT)
+	  (t VK_SAMPLE_COUNT_1_BIT))))
+	  

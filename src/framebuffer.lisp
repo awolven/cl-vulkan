@@ -27,10 +27,12 @@
 (defun set-framebuffer-size-callback (window &optional (callback-name 'resize-framebuffer-callback))
   (glfwSetFramebufferSizeCallback (h window) (get-callback callback-name)))
 
+#+NIL
 (defun create-framebuffer (device render-pass swapchain index &key (allocator +null-allocator+))
-  (with-foreign-object (p-attachments 'VkImageView 2)
+  (with-foreign-object (p-attachments 'VkImageView 3)
     (setf (mem-aref p-attachments 'VkImageView 0) (h (elt (color-image-views swapchain) index))
-	  (mem-aref p-attachments 'VkImageView 1) (h (first (depth-image-views swapchain))))
+	  (mem-aref p-attachments 'VkImageView 1) (h (first (depth-image-views swapchain)))
+	  (mem-aref p-attachments 'VkImageView 2) (h (multisample-image-view swapchain)))
 	 
     (with-vk-struct (p-info VkFramebufferCreateInfo)
       (with-foreign-slots ((%vk::renderPass
@@ -41,7 +43,7 @@
 			    %vk::layers)
 			   p-info (:struct VkFramebufferCreateInfo))
 	(setf %vk::renderPass (h render-pass)
-	      %vk::attachmentCount 2
+	      %vk::attachmentCount 3
 	      %vk::pAttachments p-attachments
 	      %vk::width (fb-width swapchain)
 	      %vk::height (fb-height swapchain)
@@ -54,10 +56,12 @@
 				      :device device :allocator allocator))))))
 
 (defun create-framebuffer2 (device render-pass swapchain index &key (allocator +null-allocator+))
-  (with-foreign-object (p-attachments 'VkImageView 3)
-    (setf (mem-aref p-attachments 'VkImageView 0) (h (elt (color-image-views swapchain) index))
+  (with-foreign-object (p-attachments 'VkImageView 4)
+    (setf (mem-aref p-attachments 'VkImageView 0) (h (multisample-image-view swapchain))
 	  (mem-aref p-attachments 'VkImageView 1) (h (first (depth-image-views swapchain)))
-	  (mem-aref p-attachments 'VkImageView 2) (h (second (depth-image-views swapchain))))
+	  (mem-aref p-attachments 'VkImageView 2) (h (second (depth-image-views swapchain)))
+	  (mem-aref p-attachments 'VkImageView 3) (h (elt (color-image-views swapchain) index))
+	  )
 	 
     (with-vk-struct (p-info VkFramebufferCreateInfo)
       (with-foreign-slots ((%vk::renderPass
@@ -68,7 +72,7 @@
 			    %vk::layers)
 			   p-info (:struct VkFramebufferCreateInfo))
 	(setf %vk::renderPass (h render-pass)
-	      %vk::attachmentCount 3
+	      %vk::attachmentCount 4
 	      %vk::pAttachments p-attachments
 	      %vk::width (fb-width swapchain)
 	      %vk::height (fb-height swapchain)

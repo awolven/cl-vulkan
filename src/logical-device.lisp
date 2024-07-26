@@ -523,7 +523,9 @@
 					(let ((device (make-instance 'sgpu-device ;; todo put queue objects in device slots!
 								     :handle (mem-aref p-device 'VkDevice)
 								     :physical-device gpu
-								     :allocator allocator)))
+								     :allocator allocator
+								     :max-usable-sample-count
+								     (get-max-usable-sample-count gpu))))
 					  (push device (logical-devices (get-vulkan-instance system-object)))
 					  (loop for queue in queue-indices-and-totals
 						do

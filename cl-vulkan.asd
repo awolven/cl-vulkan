@@ -79,7 +79,7 @@
    (:file "src/sampler")
    (:file "src/spirv")
    #+linux(:file "src/x11")
-   #+win32(:file "src/win32")
+   #+os-windows(:file "src/win32")
    #+darwin(:file "src/cocoa")
    (:file "ifc/load-foreign-libs")))
   

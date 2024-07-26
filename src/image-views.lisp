@@ -23,7 +23,7 @@
 
 (defun create-image-view (device image &key (allocator +null-allocator+)
 					 (view-type VK_IMAGE_VIEW_TYPE_2D)
-					 (format VK_FORMAT_R8G8B8A8_UNORM)
+					 (format VK_FORMAT_B8G8R8A8_UNORM)
 					 (aspect-mask VK_IMAGE_ASPECT_COLOR_BIT)
 					 (base-mip-level 0)
 					 (level-count 1)

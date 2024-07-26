@@ -165,18 +165,27 @@
   (setf (swapchain window) swapchain)
   (setf (images swapchain) (get-swapchain-images-khr swapchain))
   (setf (color-image-views swapchain) (create-image-views swapchain))
+  (setf (multisample-image-view swapchain) (create-color-resources (device swapchain)
+								   (fb-width swapchain)
+								   (fb-height swapchain)))
   (setf (depth-images swapchain) (list (create-depth-image (device swapchain) ;; 3d-depth image
 							   (fb-width swapchain)
-							   (fb-height swapchain))
+							   (fb-height swapchain)
+							   :samples (max-usable-sample-count (device swapchain)))
 				       (create-depth-image (device swapchain) ;; 2d-depth image
 							   (fb-width swapchain)
-							   (fb-height swapchain))))
+							   (fb-height swapchain)
+							   :samples (max-usable-sample-count (device swapchain)))))
   (setf (depth-image-views swapchain) (list (create-depth-image-view (device swapchain)
 								     (first (depth-images swapchain)))
 					    (create-depth-image-view (device swapchain)
 								     (second (depth-images swapchain)))))
 					    
   swapchain)
+
+(defun create-color-resources (device width height)
+  (let ((image (create-image device width height :samples (max-usable-sample-count device) :usage (logior VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT))))
+  (create-image-view device image)))
 
 (defun destroy-swapchain-resources (swapchain)
   (with-slots (device) swapchain

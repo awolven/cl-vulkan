@@ -37,7 +37,7 @@
   ((allocator :reader allocator :initarg :allocator)))
 
 (defclass logical-device-mixin (allocator-mixin)
-  ((device :initarg :device :reader device)))  
+  ((device :initarg :device :reader device)))
 
 (defclass pointer-mixin ()
   ((pointer :accessor p :initarg :pointer)))
@@ -58,7 +58,10 @@
    (command-pools :accessor command-pools :initform nil)
    (descriptor-pools :accessor descriptor-pools :initform nil)
    (queues :initform nil :accessor device-queues)
-   (stock-render-passess :initform (make-hash-table) :accessor stock-render-passes)))
+   (stock-render-passess :initform (make-hash-table) :accessor stock-render-passes)
+   (max-usable-sample-count :initform VK_SAMPLE_COUNT_1_BIT
+			    :initarg :max-usable-sample-count
+			    :accessor max-usable-sample-count)))
 
 (defclass sgpu-device (base-device)
   ((physical-device :initarg :physical-device :reader physical-device)))
@@ -73,6 +76,7 @@
    (number-of-images :accessor number-of-images)
    (images :accessor images)
    (color-image-views :accessor color-image-views)
+   (multisample-image-view :accessor multisample-image-view)
    (depth-image-views :accessor depth-image-views)
    (depth-images :accessor depth-images)
    (fb-width  :initarg :width  :reader fb-width)

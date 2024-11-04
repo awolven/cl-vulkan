@@ -98,7 +98,8 @@
    (command-pool :reader frame-command-pool :initarg :command-pool)))
 
 (defclass vulkan-window-mixin (logical-device-mixin)
-  ((swapchain :initform nil :accessor swapchain)
+  ((initialized? :initform nil :accessor window-initialized?)
+   (swapchain :initform nil :accessor swapchain)
    (render-pass :initform nil :accessor render-pass)
    (desired-format :initform VK_FORMAT_B8G8R8A8_UNORM :accessor window-desired-format
 		   :initarg :format)

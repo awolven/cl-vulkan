@@ -50,7 +50,8 @@
 					 :width width
 					 :height height))
       (call-next-method)
-      (recreate-swapchain window (render-pass window) (swapchain window) width height)
+      (setf (recreate-swapchain? window) t)
+      (setf (window-initialized? window) t)
       (values))))
 
 

@@ -149,7 +149,8 @@
 
 	    (with-foreign-object (p-swapchain 'VkSwapchainKHR)
 	      (check-vk-result (vkCreateSwapchainKHR (h device) p-create-info (h allocator) p-swapchain))
-	      (when old-swapchain (vkDestroySwapchainKHR (h device) (h old-swapchain) (h allocator)))
+	      (when old-swapchain
+		(destroy-swapchain old-swapchain))
 	      (let* ((swapchain (make-instance 'swapchain :handle (mem-aref p-swapchain 'VkSwapchainKHR)
 							  :device device
 							  :width fb-width
@@ -223,8 +224,7 @@
 		   (let* ((surface (render-surface window))
 			  (queue-family-index (queue-family-index surface)))
 		     ;;(free-command-buffers command-pool)
-		     (when swapchain
-		       (destroy-swapchain-resources swapchain))
+		     
 	      
 		     (let ((surface-format (find-supported-format
 					    (render-surface window)
@@ -420,11 +420,11 @@
 
 (defun frame-end (swapchain queue current-frame)
   (let* ((device (device swapchain))
-	     (frame-resource (elt (frame-resources swapchain) current-frame))
-	     (fence (fence frame-resource))
-	     (current-command-buffer (frame-command-buffer frame-resource))
-	     (present-complete-sem (present-complete-semaphore frame-resource))
-	     (render-complete-sem (render-complete-semaphore frame-resource)))
+	 (frame-resource (elt (frame-resources swapchain) current-frame))
+	 (fence (fence frame-resource))
+	 (current-command-buffer (frame-command-buffer frame-resource))
+	 (present-complete-sem (present-complete-semaphore frame-resource))
+	 (render-complete-sem (render-complete-semaphore frame-resource)))
 
     (vkCmdEndRenderPass (h current-command-buffer))
 
@@ -470,9 +470,8 @@
 	
 	  (let ((result (vkQueuePresentKHR (h queue) p-info)))
 	  
-	    (if (or (eq result VK_ERROR_OUT_OF_DATE_KHR) (eq result VK_SUBOPTIMAL_KHR))
-		(multiple-value-bind (fb-width fb-height) (clui::window-framebuffer-size window)
-		  (recreate-swapchain window (render-pass window) swapchain fb-width fb-height))
+	    (if (eq result VK_ERROR_OUT_OF_DATE_KHR)
+		(setf (recreate-swapchain? window) t)
 		(check-vk-result result)))))))
 
   (values))

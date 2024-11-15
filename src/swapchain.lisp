@@ -212,37 +212,37 @@
     (destroy-frame-resources swapchain)
     (values)))
 
-(defun recreate-swapchain (window render-pass swapchain fb-width fb-height)
+(defun recreate-swapchain (window device render-pass swapchain fb-width fb-height)
   (declare (ignore fb-width fb-height))
   (let ((fb-width)
 	(fb-height))
     (flet ((try-recreate ()
-	       
-	       (multiple-value-setq (fb-width fb-height) (clui:window-framebuffer-size window))
-	       (when (not (or (zerop fb-width) (zerop fb-height)))
-		 (with-slots (device) swapchain
-		   (let* ((surface (render-surface window))
-			  (queue-family-index (queue-family-index surface)))
-		     ;;(free-command-buffers command-pool)
+
+	     (multiple-value-setq (fb-width fb-height) (clui:window-framebuffer-size window))
+	     (when (not (or (zerop fb-width) (zerop fb-height)))
+		 
+	       (let* ((surface (render-surface window))
+		      (queue-family-index (queue-family-index surface)))
+		 ;;(free-command-buffers command-pool)
 		     
 	      
-		     (let ((surface-format (find-supported-format
-					    (render-surface window)
-					    :requested-image-format (window-desired-format window)
-					    :requested-color-space (window-desired-color-space window)))
-			   (present-mode (get-physical-device-surface-present-mode
-					  (physical-device device) (render-surface window)))
-			   (old-swapchain swapchain))
+		 (let* ((surface-format (find-supported-format
+					 (render-surface window)
+					 :requested-image-format (window-desired-format window)
+					 :requested-color-space (window-desired-color-space window)))
+			(present-mode (get-physical-device-surface-present-mode
+				       (physical-device device) (render-surface window)))
+			(old-swapchain swapchain))
 		
-		       (setf swapchain (create-swapchain device window
-							 fb-width fb-height
-							 surface-format present-mode
-							 :old-swapchain old-swapchain))
+		   (setf swapchain (create-swapchain device window
+						     fb-width fb-height
+						     surface-format present-mode
+						     :old-swapchain old-swapchain))
 
 		
-		       (setup-framebuffers device render-pass swapchain)
-		       (create-frame-resources swapchain queue-family-index)
-		       t))))))
+		   (setup-framebuffers device render-pass swapchain)
+		   (create-frame-resources swapchain queue-family-index)
+		   t)))))
 	
 	(loop until (try-recreate)
 	   do #+glfw(glfwWaitEvents)

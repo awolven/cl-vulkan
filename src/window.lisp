@@ -33,6 +33,7 @@
   (glfwSetWindowShouldClose window GLFW_TRUE)
   (values))
 
+#+NIL
 (defun set-window-close-callback (window &optional (callback-name 'window-close-callback))
   (glfwSetWindowCloseCallback (h window) (get-callback callback-name)))
 
@@ -59,12 +60,11 @@
   (destroy-os-window window))
 
 (defmethod destroy-os-window ((window vulkan-window))
-  (let* ((app (application window))
-	 (device (default-logical-device app))
-	 (vkinstance (vulkan-instance app)))
+  (let* ((dpy (clui:window-display window))
+	 (device (default-logical-device dpy))
+	 (vkinstance *vulkan-instance*))
     (vkDeviceWaitIdle device)
     (destroy-swapchain (swapchain window))
-    (vkDestroySurfaceKHR (h vkinstance) (h (render-surface window)) (h (allocator device)))
-    #+glfw(glfwDestroyWindow (h window))))
+    (vkDestroySurfaceKHR (h vkinstance) (h (render-surface window)) (h (allocator device)))))
 
 

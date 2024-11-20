@@ -21,9 +21,11 @@
 
 (in-package :vk)
 
+#+NIL
 (defcallback resize-framebuffer-callback :void ((window :pointer) (w :int) (h :int))
   (resize-framebuffer (find-window window) w h))
 
+#+NIL
 (defun set-framebuffer-size-callback (window &optional (callback-name 'resize-framebuffer-callback))
   (glfwSetFramebufferSizeCallback (h window) (get-callback callback-name)))
 

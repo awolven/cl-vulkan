@@ -91,14 +91,14 @@
     t))
 
 (defun create-instance (system-object &key (title "CL-Vulkan Demo")
-			  (application-name title)
-			  (application-version 0)
-			  (engine-name "")
-			  (engine-version 0)
-			  layer-names
-			  extension-names
-			  (api-version (api-version 1 3 250))
-			  (allocator +null-allocator+)
+					(application-name title)
+					(application-version 0)
+					(engine-name "")
+					(engine-version 0)
+					layer-names
+					extension-names
+					(api-version (api-version 1 3 250))
+					(allocator +null-allocator+)
 			&allow-other-keys)
 
   #+(and sbcl darwin)(sb-int:set-floating-point-modes :traps nil)
@@ -113,153 +113,152 @@
       (pushnew "VK_LAYER_LUNARG_api_dump" layer-names :test #'string=))
     
     (loop for layer in layer-names
-       unless (find layer available-layers :test #'string=)
-       do (error "layer ~S is not available" layer))
+	  unless (find layer available-layers :test #'string=)
+	    do (error "layer ~S is not available" layer))
     
     (loop for ext in extension-names
-       unless (find ext available-extensions :test #'string=)
-       do (error "extension ~S is not available" ext)))
+	  unless (find ext available-extensions :test #'string=)
+	    do (error "extension ~S is not available" ext)))
 
-  (with-foreign-object (p-extensions-count :uint32)
-    #+glfw
-    (when (zerop (glfwInit))
-      (error "GLFW failed to initialize."))
+  #+glfw
+  (when (zerop (glfwInit))
+    (error "GLFW failed to initialize."))
     
-    (let* ((required-extensions (get-required-instance-extensions system-object))
-	   (required-extension-count (length required-extensions))
-	   (extension-count (+ (length extension-names) required-extension-count))
-	   (layer-count (length layer-names)))
+  (let* ((required-extensions (get-required-instance-extensions system-object))
+	 (required-extension-count (length required-extensions))
+	 (extension-count (+ (length extension-names) required-extension-count))
+	 (layer-count (length layer-names)))
 
-      (loop for extension in required-extensions
-	   do (push extension extension-names))
+    (loop for extension in required-extensions
+	  do (push extension extension-names))
 
-      (with-foreign-objects
-	  ((pp-enabled-extension-names-with-debug '(:pointer :char) (1+ extension-count))
-	   (pp-enabled-extension-names '(:pointer :char) extension-count)
-	   (pp-enabled-layer-names-with-validation '(:pointer :char) (1+ layer-count))
-	   (pp-enabled-layer-names '(:pointer :char) layer-count))
+    (with-foreign-objects
+	((pp-enabled-extension-names-with-debug '(:pointer :char) (1+ extension-count))
+	 (pp-enabled-extension-names '(:pointer :char) extension-count)
+	 (pp-enabled-layer-names-with-validation '(:pointer :char) (1+ layer-count))
+	 (pp-enabled-layer-names '(:pointer :char) layer-count))
 	
-	(unwind-protect
-	     (progn
-	       (loop for i from 0
-		  for extension-string in extension-names
-		  do
-		    (setf
-		     (mem-aref pp-enabled-extension-names-with-debug '(:pointer :char) i)
-		     (foreign-string-alloc extension-string)
-		     (mem-aref pp-enabled-extension-names '(:pointer :char) i)
-		     (foreign-string-alloc extension-string))
-		  finally
-		    (setf
-		     (mem-aref pp-enabled-extension-names-with-debug '(:pointer :char) i)
-		     (foreign-string-alloc VK_EXT_DEBUG_REPORT_EXTENSION_NAME)))
+      (unwind-protect
+	   (progn
+	     (loop for i from 0
+		   for extension-string in extension-names
+		   do
+		      (setf
+		       (mem-aref pp-enabled-extension-names-with-debug '(:pointer :char) i)
+		       (foreign-string-alloc extension-string)
+		       (mem-aref pp-enabled-extension-names '(:pointer :char) i)
+		       (foreign-string-alloc extension-string))
+		   finally
+		      (setf
+		       (mem-aref pp-enabled-extension-names-with-debug '(:pointer :char) i)
+		       (foreign-string-alloc VK_EXT_DEBUG_REPORT_EXTENSION_NAME)))
 	       
-	       (loop for i from 0
-		  for layer-string in layer-names
-		  do
-		    (setf
-		     (mem-aref pp-enabled-layer-names-with-validation '(:pointer :char) i)
-		     (foreign-string-alloc layer-string)
-		     (mem-aref pp-enabled-layer-names '(:pointer :char) i)
-		     (foreign-string-alloc layer-string))
-		  finally
-		    (setf
-		     (mem-aref pp-enabled-layer-names-with-validation '(:pointer :char) i)
-		     #-NVIDIA
-		     (foreign-string-alloc "VK_LAYER_KHRONOS_validation")
-		     #+NVIDIA
-		     (foreign-string-alloc "VK_LAYER_LUNARG_standard_validation")))
+	     (loop for i from 0
+		   for layer-string in layer-names
+		   do
+		      (setf
+		       (mem-aref pp-enabled-layer-names-with-validation '(:pointer :char) i)
+		       (foreign-string-alloc layer-string)
+		       (mem-aref pp-enabled-layer-names '(:pointer :char) i)
+		       (foreign-string-alloc layer-string))
+		   finally
+		      (setf
+		       (mem-aref pp-enabled-layer-names-with-validation '(:pointer :char) i)
+		       #-NVIDIA
+		       (foreign-string-alloc "VK_LAYER_KHRONOS_validation")
+		       #+NVIDIA
+		       (foreign-string-alloc "VK_LAYER_LUNARG_standard_validation")))
 	       
-	       (with-vk-struct (p-application-info VkApplicationInfo)
-		 (with-foreign-slots ((%vk::pApplicationName
-				       %vk::applicationVersion
-				       %vk::pEngineName
-				       %vk::engineVersion
-				       %vk::apiVersion)
-				      p-application-info
-				      (:struct VkApplicationInfo))
-		   (with-foreign-strings ((p-application-name application-name)
-					  (p-engine-name engine-name))
-		     (setf %vk::pApplicationName p-application-name
-			   %vk::applicationVersion application-version
-			   %vk::pEngineName p-engine-name
-			   %vk::engineVersion engine-version
-			   %vk::apiVersion api-version)
+	     (with-vk-struct (p-application-info VkApplicationInfo)
+	       (with-foreign-slots ((%vk::pApplicationName
+				     %vk::applicationVersion
+				     %vk::pEngineName
+				     %vk::engineVersion
+				     %vk::apiVersion)
+				    p-application-info
+				    (:struct VkApplicationInfo))
+		 (with-foreign-strings ((p-application-name application-name)
+					(p-engine-name engine-name))
+		   (setf %vk::pApplicationName p-application-name
+			 %vk::applicationVersion application-version
+			 %vk::pEngineName p-engine-name
+			 %vk::engineVersion engine-version
+			 %vk::apiVersion api-version)
 
-		     (with-foreign-object (p-instance 'VkInstance)
-		       (with-vk-struct (p-create-info VkInstanceCreateInfo)
-			 ;; note: pNext takes pointers to structures (usually for callbacks)
-			 ;; which should be implemented at some point.
-			 (with-foreign-slots ((%vk::pApplicationInfo
-					       %vk::enabledExtensionCount
-					       %vk::ppEnabledExtensionNames
-					       %vk::enabledLayerCount
-					       %vk::ppEnabledLayerNames
-					       %vk::flags)
-					      p-create-info
-					      (:struct VkInstanceCreateInfo))
+		   (with-foreign-object (p-instance 'VkInstance)
+		     (with-vk-struct (p-create-info VkInstanceCreateInfo)
+		       ;; note: pNext takes pointers to structures (usually for callbacks)
+		       ;; which should be implemented at some point.
+		       (with-foreign-slots ((%vk::pApplicationInfo
+					     %vk::enabledExtensionCount
+					     %vk::ppEnabledExtensionNames
+					     %vk::enabledLayerCount
+					     %vk::ppEnabledLayerNames
+					     %vk::flags)
+					    p-create-info
+					    (:struct VkInstanceCreateInfo))
 
-			   (setf %vk::pApplicationInfo p-application-info)
-			   #+darwin(setf %vk::flags %vk::VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT)
+			 (setf %vk::pApplicationInfo p-application-info)
+			 #+darwin(setf %vk::flags %vk::VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT)
 
-			   (flet ((try-create-inst (&key debug validation)
-				    (let ((1+extension-count (1+ extension-count))
-					  (1+layer-count (1+ layer-count)))
+			 (flet ((try-create-inst (&key debug validation)
+				  (let ((1+extension-count (1+ extension-count))
+					(1+layer-count (1+ layer-count)))
 				  
-				      (if debug
-					  (setf %vk::ppEnabledExtensionNames pp-enabled-extension-names-with-debug
-						%vk::enabledExtensionCount 1+extension-count)
-					  (setf %vk::ppEnabledExtensionNames	pp-enabled-extension-names
-						%vk::enabledExtensionCount extension-count))
+				    (if debug
+					(setf %vk::ppEnabledExtensionNames pp-enabled-extension-names-with-debug
+					      %vk::enabledExtensionCount 1+extension-count)
+					(setf %vk::ppEnabledExtensionNames	pp-enabled-extension-names
+					      %vk::enabledExtensionCount extension-count))
 				  
-				      (if validation
-					  (setf %vk::ppEnabledLayerNames pp-enabled-layer-names-with-validation
-						%vk::enabledLayerCount 1+layer-count)
-					  (setf %vk::ppEnabledLayerNames pp-enabled-layer-names
-						%vk::enabledLayerCount layer-count)))
+				    (if validation
+					(setf %vk::ppEnabledLayerNames pp-enabled-layer-names-with-validation
+					      %vk::enabledLayerCount 1+layer-count)
+					(setf %vk::ppEnabledLayerNames pp-enabled-layer-names
+					      %vk::enabledLayerCount layer-count)))
 
-				    (vkCreateInstance p-create-info (h allocator) p-instance)))
+				  (vkCreateInstance p-create-info (h allocator) p-instance)))
 
-			     (let ((result)
-				   (debug-report-present nil))
-			       (block try
-				 (if *debug*
-				     (progn
-				       (setq result (try-create-inst :validation t :debug t))
-				       (if (eq result VK_ERROR_LAYER_NOT_PRESENT)
-					   (progn (warn "Trying to create vulkan instance with VK_LAYER_KHRONOS_validation failed, falling back...")
-						  (setq result (try-create-inst :debug t))
-						  (if (eq result VK_ERROR_EXTENSION_NOT_PRESENT)
-						      (progn
-							(warn "Trying to create vulkan instance with VK_EXT_debug_report failed, falling back...")
-							(check-vk-result (try-create-inst)))
-						      (if (eq result VK_SUCCESS)
-							  (setq debug-report-present t)
-							  (check-vk-result result))))
-					   (if (eq result VK_ERROR_EXTENSION_NOT_PRESENT)
-					       (progn (warn "Trying to create vulkan instance with VK_EXT_debug_report failed, falling back...")
-						      (setq result (try-create-inst :validation t))
-						      (if (eq result VK_ERROR_LAYER_NOT_PRESENT)
-							  (warn "Trying to create vulkan instance with VK_LAYER_LUNARG_STANDARD_VALIDATION failed, falling back...")
-							  (if (eq result VK_SUCCESS)
-							      (setq debug-report-present t)
-							      (check-vk-result (try-create-inst)))))
-					       (if (eq result VK_SUCCESS)
-						   (setq debug-report-present t)
-						   (check-vk-result result)))))
-				     (check-vk-result (try-create-inst))))
+			   (let ((result)
+				 (debug-report-present nil))
+			     (block try
+			       (if *debug*
+				   (progn
+				     (setq result (try-create-inst :validation t :debug t))
+				     (if (eq result VK_ERROR_LAYER_NOT_PRESENT)
+					 (progn (warn "Trying to create vulkan instance with VK_LAYER_KHRONOS_validation failed, falling back...")
+						(setq result (try-create-inst :debug t))
+						(if (eq result VK_ERROR_EXTENSION_NOT_PRESENT)
+						    (progn
+						      (warn "Trying to create vulkan instance with VK_EXT_debug_report failed, falling back...")
+						      (check-vk-result (try-create-inst)))
+						    (if (eq result VK_SUCCESS)
+							(setq debug-report-present t)
+							(check-vk-result result))))
+					 (if (eq result VK_ERROR_EXTENSION_NOT_PRESENT)
+					     (progn (warn "Trying to create vulkan instance with VK_EXT_debug_report failed, falling back...")
+						    (setq result (try-create-inst :validation t))
+						    (if (eq result VK_ERROR_LAYER_NOT_PRESENT)
+							(warn "Trying to create vulkan instance with VK_LAYER_LUNARG_STANDARD_VALIDATION failed, falling back...")
+							(if (eq result VK_SUCCESS)
+							    (setq debug-report-present t)
+							    (check-vk-result (try-create-inst)))))
+					     (if (eq result VK_SUCCESS)
+						 (setq debug-report-present t)
+						 (check-vk-result result)))))
+				   (check-vk-result (try-create-inst))))
 			 
-			       (setq *vulkan-instance*
-				     (make-instance 'instance
-						    :handle (mem-aref p-instance 'VkInstance)
-						    :debug-report-present debug-report-present
-						    :allocator allocator)))))))))))
+			     (setq *vulkan-instance*
+				   (make-instance 'instance
+						  :handle (mem-aref p-instance 'VkInstance)
+						  :debug-report-present debug-report-present
+						  :allocator allocator)))))))))))
 
-	  (loop for i from 0 below extension-count
-	     do (foreign-string-free (mem-aref pp-enabled-extension-names-with-debug '(:pointer :char) i)))
-	  (loop for i from 0 below extension-count
-	     do (foreign-string-free (mem-aref pp-enabled-extension-names '(:pointer :char) i)))
-	  (loop for i from 0 below layer-count
-	     do (foreign-string-free (mem-aref pp-enabled-layer-names-with-validation '(:pointer :char) i)))
-	  (loop for i from 0 below layer-count
-	     do (foreign-string-free (mem-aref pp-enabled-layer-names '(:pointer :char) i))))))))
+	(loop for i from 0 below extension-count
+	      do (foreign-string-free (mem-aref pp-enabled-extension-names-with-debug '(:pointer :char) i)))
+	(loop for i from 0 below extension-count
+	      do (foreign-string-free (mem-aref pp-enabled-extension-names '(:pointer :char) i)))
+	(loop for i from 0 below layer-count
+	      do (foreign-string-free (mem-aref pp-enabled-layer-names-with-validation '(:pointer :char) i)))
+	(loop for i from 0 below layer-count
+	      do (foreign-string-free (mem-aref pp-enabled-layer-names '(:pointer :char) i)))))))

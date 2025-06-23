@@ -1901,6 +1901,7 @@ MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 (cl:defconstant VK_STRUCTURE_TYPE_SPARSE_IMAGE_FORMAT_PROPERTIES_2_KHR #x3B9BB07F) ;; "VK_KHR_get_physical_device_properties2"
 (cl:defconstant VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SPARSE_IMAGE_FORMAT_INFO_2_KHR #x3B9BB080) ;; "VK_KHR_get_physical_device_properties2"
 (cl:defconstant VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO_KHX #x3B9BB460) ;; "VK_KHX_device_group"
+(cl:defconstant VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO 1000060000)
 (cl:defconstant VK_STRUCTURE_TYPE_BIND_BUFFER_MEMORY_INFO_KHX #x3B9BB461) ;; "VK_KHX_device_group"
 (cl:defconstant VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO_KHX #x3B9BB462) ;; "VK_KHX_device_group"
 (cl:defconstant VK_STRUCTURE_TYPE_DEVICE_GROUP_RENDER_PASS_BEGIN_INFO_KHX #x3B9BB463) ;; "VK_KHX_device_group"
@@ -3213,6 +3214,12 @@ MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
   (size VkDeviceSize))
 
 (cffi:defcstruct VkMemoryAllocateFlagsInfoKHX
+  (sType VkStructureType)#|MUST-BE :MEMORY-ALLOCATE-FLAGS-INFO-KHX|#
+  (pNext (:pointer :void))
+  (flags VkMemoryAllocateFlagsKHX)#|OPTIONAL (:true)|#
+  (deviceMask :uint32))
+
+(cffi:defcstruct VkMemoryAllocateFlagsInfo
   (sType VkStructureType)#|MUST-BE :MEMORY-ALLOCATE-FLAGS-INFO-KHX|#
   (pNext (:pointer :void))
   (flags VkMemoryAllocateFlagsKHX)#|OPTIONAL (:true)|#

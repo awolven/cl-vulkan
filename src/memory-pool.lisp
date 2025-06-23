@@ -6,7 +6,7 @@
    (memory-allocation :reader allocation)
    (device :accessor memory-pool-device)
    (buffer :accessor memory-pool-big-buffer)
-   (allocated :initform (make-hash-table))
+   (allocated :initform (make-hash-table :synchronized t))
    (miniscule-free :initform nil :accessor memory-pool-miniscule-free)
    (tiny-free :initform nil :accessor memory-pool-tiny-free)
    (small-free :initform nil :accessor memory-pool-small-free)
@@ -23,6 +23,7 @@
 (defclass memory-pool (memory-pool-mixin) ())
 
 (defconstant VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT #x00020000)
+(defconstant VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT #x00000002)
 
 (defmethod initialize-instance :before ((instance memory-pool-mixin) &rest initargs
                                         &key device
@@ -48,16 +49,23 @@
 				 properties))
 	     (memory-type (elt (memory-types (physical-device device)) memory-type-index))
 	     (memory-heap (elt (memory-heaps (physical-device device)) (memory-type-heap-index memory-type)))
-	     (size (min (memory-heap-size memory-heap) 1158791168 #+NIL(max-memory-allocation-count (physical-device device)))))
+	     (size (+ (expt 2 31) (expt 2 30) (expt 2 29) (expt 2 28) (expt 2 27))#+NIL(min (memory-heap-size memory-heap) 1158791168 #+NIL(max-memory-allocation-count (physical-device device)))))
 	(vkDestroyBuffer (h device) (h test-buffer) (h (allocator test-buffer)))
 	(let ((big-buffer (create-buffer-1 device size usage)))
+	  (with-vk-struct (p-alloc-flags-info VkMemoryAllocateFlagsInfo)
+	    (with-foreign-slots ((%vk::flags)
+				 p-alloc-flags-info
+				 (:struct VkMemoryAllocateFlagsInfo))
+	      (setf %vk::flags VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT))
 	  (with-vk-struct (p-alloc-info VkMemoryAllocateInfo)	       
 	    (with-foreign-slots ((%vk::allocationSize
-				  %vk::memoryTypeIndex)
+				  %vk::memoryTypeIndex
+				  %vk::pNext)
 				 p-alloc-info
 				 (:struct VkMemoryAllocateInfo))
 	      (setf %vk::allocationSize size
-		    %vk::memoryTypeIndex memory-type-index)
+		    %vk::memoryTypeIndex memory-type-index
+		    %vk::pNext p-alloc-flags-info)
 	      (with-foreign-object (p-buffer-memory 'VkDeviceMemory)
 		(check-vk-result (vkAllocateMemory (h device) p-alloc-info (h (allocator device)) p-buffer-memory))
 		(setf (slot-value instance 'memory-allocation)
@@ -72,7 +80,7 @@
 				     :size size)))
 	      (setf (allocated-memory big-buffer) (slot-value instance 'memory-allocation))
 	      (bind-buffer-memory device big-buffer (slot-value instance 'memory-allocation))
-	      (setf (memory-pool-big-buffer instance) big-buffer)))))))
+	      (setf (memory-pool-big-buffer instance) big-buffer))))))))
   (values))
 
 (defstruct memory-resource
@@ -129,9 +137,11 @@
   (let ((actual-size (aligned-size (round (* 2 size))))
 	(device (memory-pool-device memory-pool)))
     (or (loop for memory-resource in (memory-pool-custom-free memory-pool)
-	   when (>= (memory-resource-size memory-resource) actual-size)
-	     do (setf (memory-pool-custom-free memory-pool) (delete memory-resource (memory-pool-custom-free memory-pool)))
-	     (return (setf (gethash memory-resource (slot-value memory-pool 'allocated)) memory-resource)))
+	      when (>= (memory-resource-size memory-resource) actual-size)
+		do (setf (memory-pool-custom-free memory-pool) (delete memory-resource (memory-pool-custom-free memory-pool)))
+		   (return (sb-ext:with-locked-hash-table
+			       ((slot-value memory-pool 'allocated))
+			     (setf (gethash memory-resource (slot-value memory-pool 'allocated)) memory-resource))))
 	
 	(let* ((usage (logior VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
 			      VK_BUFFER_USAGE_INDEX_BUFFER_BIT
@@ -148,35 +158,43 @@
 					'(:struct VkMemoryRequirements)
 					'%vk::memoryTypeBits)
 				       properties)))
-	      
-	      (with-vk-struct (p-alloc-info VkMemoryAllocateInfo)
-		(with-foreign-slots ((%vk::allocationSize
-				      %vk::memoryTypeIndex)
-				     p-alloc-info
-				     (:struct VkMemoryAllocateInfo))
-		  (setf %vk::allocationSize actual-size
-			%vk::memoryTypeIndex memory-type-index)
+	      (with-vk-struct (p-alloc-flags-info VkMemoryAllocateFlagsInfo)
+		(with-foreign-slots ((%vk::flags)
+				     p-alloc-flags-info
+				     (:struct VkMemoryAllocateFlagsInfo))
+		  (setf %vk::flags VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT))
+		
+		(with-vk-struct (p-alloc-info VkMemoryAllocateInfo)
+		  (with-foreign-slots ((%vk::allocationSize
+					%vk::memoryTypeIndex
+					%vk::pNext)
+				       p-alloc-info
+				       (:struct VkMemoryAllocateInfo))
+		    (setf %vk::allocationSize actual-size
+			  %vk::memoryTypeIndex memory-type-index
+			  %vk::pNext p-alloc-flags-info)
 		  
-		  (with-foreign-object (p-buffer-memory 'VkDeviceMemory)
-		    (check-vk-result (vkAllocateMemory (h device) p-alloc-info (h (allocator device)) p-buffer-memory))
-		    (let ((allocation (make-instance 'allocated-memory
-					 :handle (mem-aref p-buffer-memory 'VkDeviceMemory)
-					 :device device
-					 :allocator (allocator device)
-					 :alignment (foreign-slot-value
-						     p-requirements
-						     '(:struct VkMemoryRequirements)
-						     '%vk::alignment)
-					 :size actual-size)))
-		      (setf (allocated-memory buffer) allocation)
-		      (bind-buffer-memory device buffer allocation)
-		      (let ((memory-resource (make-memory-resource-custom
-					      :buffer buffer
-					      :allocation allocation
-					      :memory-pool memory-pool
-					      :offset 0
-					      :size actual-size)))
-			(setf (gethash memory-resource (slot-value memory-pool 'allocated)) memory-resource))))))))))))
+		    (with-foreign-object (p-buffer-memory 'VkDeviceMemory)
+		      (check-vk-result (vkAllocateMemory (h device) p-alloc-info (h (allocator device)) p-buffer-memory))
+		      (let ((allocation (make-instance 'allocated-memory
+						       :handle (mem-aref p-buffer-memory 'VkDeviceMemory)
+						       :device device
+						       :allocator (allocator device)
+						       :alignment (foreign-slot-value
+								   p-requirements
+								   '(:struct VkMemoryRequirements)
+								   '%vk::alignment)
+						       :size actual-size)))
+			(setf (allocated-memory buffer) allocation)
+			(bind-buffer-memory device buffer allocation)
+			(let ((memory-resource (make-memory-resource-custom
+						:buffer buffer
+						:allocation allocation
+						:memory-pool memory-pool
+						:offset 0
+						:size actual-size)))
+			  (sb-ext:with-locked-hash-table ((slot-value memory-pool 'allocated))
+			    (setf (gethash memory-resource (slot-value memory-pool 'allocated)) memory-resource))))))))))))))
 
 (defparameter *miniscule-buffer-size* (expt 2 11)) ;; 2 kB  --> 4
 (defparameter *tiny-buffer-size* (expt 2 13)) ;; 8 kB --> 6
@@ -192,7 +210,9 @@
 
 (defun get-buffer-counts (max-size)
   (loop for i from 11 to 29 by 2
-     for n in '(1536 128 512 8 0 8 6 4 3)
+	for n in
+	;;'(1536 128 512 8 0 8 6 4 3)
+	'(8192 8192 8192 4096 512 256 64 9 4 2)
      with sum = 0
      with next
      with collection = ()
@@ -236,7 +256,8 @@
        (when (,(intern (concatenate 'string "MEMORY-POOL-" name "-FREE")) memory-pool)
 	 (let ((new (pop (,(intern (concatenate 'string "MEMORY-POOL-" name "-FREE") :vk) memory-pool))))
 	   (when new
-	     (setf (gethash new (slot-value memory-pool 'allocated)) new)))))))
+	     (sb-ext:with-locked-hash-table ((slot-value memory-pool 'allocated))
+	       (setf (gethash new (slot-value memory-pool 'allocated)) new))))))))
 
 (define-memory-acquisition-function "MINISCULE")
 (define-memory-acquisition-function "TINY")
@@ -363,7 +384,8 @@
 	   (push memory-resource (memory-pool-custom-free memory-pool))
 	   t)
 	  (t (warn "~S is not a known memory-resource type" memory-resource)))
-    (remhash memory-resource (slot-value memory-pool 'allocated))
+    (sb-ext:with-locked-hash-table ((slot-value memory-pool 'allocated))
+      (remhash memory-resource (slot-value memory-pool 'allocated)))
     (values)))
 
 (defun release-memory-resource (dpy memory-resource)
@@ -409,7 +431,8 @@
 	     (push memory-resource (memory-pool-custom-free memory-pool))
 	     t)
 	    (t (warn "~S is not a known memory-resource type" memory-resource)))
-      (remhash memory-resource (slot-value memory-pool 'allocated))
+      (sb-ext:with-locked-hash-table ((slot-value memory-pool 'allocated))
+      (remhash memory-resource (slot-value memory-pool 'allocated)))
       (values))))
       
     

@@ -481,6 +481,7 @@
    #:VkMacOSSurfaceCreateInfoMVK
    #:VkMappedMemoryRange
    #:VkMemoryAllocateFlagsInfoKHX
+   #:VkMemoryAllocateFlagsInfo
    #:VkMemoryAllocateInfo
    #:VkMemoryBarrier
    #:VkMemoryFdPropertiesKHX

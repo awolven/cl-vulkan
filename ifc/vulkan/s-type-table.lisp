@@ -282,6 +282,9 @@
 	      'VkMemoryAllocateFlagsInfoKHX
 	      VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO_KHX
 
+	      'VkMemoryAllocateFlagsInfo
+	      VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO
+
 	      'VkMemoryAllocateInfo
 	      VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO
 

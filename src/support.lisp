@@ -218,7 +218,7 @@
     (#.VK_NOT_READY   (warn "A fence or query has not yet completed.") (values))
     (#.VK_TIMEOUT     (warn "A wait operation has not completed in the specified time.") (values))
     (#.VK_EVENT_SET   (format *error-output* "An event is signaled.") (values))
-    (#.VK_EVENT_RESET (format *error-output* "An even is unsignaled.") (values))
+    (#.VK_EVENT_RESET (format *error-output* "An event is unsignaled.") (values))
     (#.VK_INCOMPLETE  (warn "A return array was too small for the result.") (values))
 
     (#.VK_ERROR_OUT_OF_HOST_MEMORY

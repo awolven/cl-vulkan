@@ -45,8 +45,12 @@
 (defclass allocation-callbacks (handle-mixin)
   ((handle :initform +nullptr+)))
 
+(defparameter +null-allocator+ (make-instance 'allocation-callbacks :handle +nullptr+))
+
 (defclass pipeline-cache (handle-mixin)
   ())
+
+(defparameter +null-pipeline-cache+ (make-instance 'pipeline-cache :handle VK_NULL_HANDLE))
 
 (defclass instance (handle-mixin allocator-mixin)
   ((logical-devices :initform () :accessor logical-devices)
@@ -54,14 +58,21 @@
    (debug-callback :accessor debug-callback :initform nil)))
 
 (defclass base-device (handle-mixin allocator-mixin)
-  ((pipeline-cache :accessor pipeline-cache)
+  ((system-gpus :accessor system-gpus :initform nil)
+   (pipeline-cache :initform +null-pipeline-cache+ :initarg :pipeline-cache :reader pipeline-cache)
+   (default-descriptor-pool :accessor default-descriptor-pool)
+   (allocation-callbacks :initform +null-allocator+ :initarg :allocator :reader allocator)
    (command-pools :accessor command-pools :initform nil)
    (descriptor-pools :accessor descriptor-pools :initform nil)
    (queues :initform nil :accessor device-queues)
    (stock-render-passess :initform (make-hash-table) :accessor stock-render-passes)
    (max-usable-sample-count :initform VK_SAMPLE_COUNT_1_BIT
 			    :initarg :max-usable-sample-count
-			    :accessor max-usable-sample-count)))
+			    :accessor max-usable-sample-count)
+   (non-device-local-allocators :initform nil
+				:accessor non-device-local-allocators)
+   (device-local-allocators :initform nil
+			    :accessor device-local-allocators)))
 
 (defclass sgpu-device (base-device)
   ((physical-device :initarg :physical-device :reader physical-device)))
@@ -1068,9 +1079,9 @@
   (color)
   (draw-list))
 
-(defparameter +null-allocator+ (make-instance 'allocation-callbacks :handle +nullptr+))
 
-(defparameter +null-pipeline-cache+ (make-instance 'pipeline-cache :handle VK_NULL_HANDLE))
+
+
 
 (defparameter +null-swapchain+ (make-instance 'swapchain :handle +nullptr+))
 
@@ -1078,15 +1089,8 @@
 
 (defclass vulkan-enabled-display-mixin ()
   ((default-logical-device :accessor default-logical-device)
-   (system-gpus :accessor system-gpus :initform nil)
-   (pipeline-cache :initform +null-pipeline-cache+ :initarg :pipeline-cache :reader pipeline-cache)
-   (default-descriptor-pool :accessor default-descriptor-pool)
-   (allocation-callbacks :initform +null-allocator+ :initarg :allocator :reader allocator)
    (window-registry :initform nil :accessor window-registry)
-   (main-window :accessor main-window)
-   (memory-pool
-    :accessor memory-pool
-    :initform nil)))
+   (main-window :accessor main-window)))
 
 (defclass vulkan-module ()
   ((application :reader application :initarg :application)))

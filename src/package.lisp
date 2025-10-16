@@ -99,6 +99,9 @@
 	   #:draw-index-cmd
 	   #:acquire-memory-sized
 	   #:release-memory
+	   #:memory-block-offset
+	   #:memory-block-buffer
+	   #:memory-block-size
 
 	   #:with-fences
 	   #:create-buffer-1

@@ -47,75 +47,73 @@
     (vkDestroyDevice (h device) (h (allocator device))) 
     (values)))
 
-(defmethod required-vulkan-device-extensions ((display vulkan-enabled-display-mixin))
+(defmethod required-vulkan-device-extensions (thing)
+  (declare (ignore thing))
   (list #-darwin "VK_EXT_line_rasterization"))
 
-(defmethod initialize-instance :before ((instance vulkan-enabled-display-mixin)
-					&rest initargs &key &allow-other-keys)
-  (let ((vulkan-device-extensions (getf initargs :vulkan-device-extensions)))
-    (remf initargs :vulkan-device-extensions)
-    (setq vulkan-device-extensions
-	  (append (required-vulkan-device-extensions instance)
-		  vulkan-device-extensions))
-    (apply #'setup-vulkan instance :vulkan-device-extensions vulkan-device-extensions initargs)
-    (initialize-buffer-memory-pool instance)
-    (values)))
+(defmethod initialize-instance :before ((dpy vulkan-enabled-display-mixin)
+					&rest initargs)
+  (let ((vulkan-instance (get-vulkan-instance)))
+    (setf (default-logical-device dpy)
+	  (apply #'setup-vulkan vulkan-instance initargs)))
+  (values))
 
-(defun setup-vulkan (dpy &rest args
+(defun setup-vulkan (vulkan-instance &rest args
 		     &key (compute-queue-count 0)
 		       (vulkan-device-extensions nil)
 		       (wide-lines #+(or windows linux) t #+(or darwin) nil)
 		       (rectangular-lines nil)
 		       (stippled-lines #+(or windows linux) t #+(or darwin) nil)
 		     &allow-other-keys)
-  (let ((vulkan-instance (get-vulkan-instance dpy)))
-    (let ((debug-callback (when (debug-report-present? vulkan-instance)
-			    (create-debug-report-callback vulkan-instance 'debug-report-callback))))
-      (setf (debug-callback vulkan-instance) debug-callback)
+  (setf vulkan-device-extensions (append (required-vulkan-device-extensions vulkan-instance)
+					 vulkan-device-extensions))
+  (let ((debug-callback (when (debug-report-present? vulkan-instance)
+			  (create-debug-report-callback vulkan-instance 'debug-report-callback))))
+    (setf (debug-callback vulkan-instance) debug-callback)
+    
+    (let ((physical-devices (enumerate-physical-devices vulkan-instance)))
       
-      (let ((physical-devices (enumerate-physical-devices dpy)))
-
-	(setf (system-gpus dpy) physical-devices)
-	
-	(multiple-value-bind (gpu index) (block get-gpu
-					   (loop for gpu in physical-devices
-					         do (loop for queue-family in (queue-families gpu) for i from 0
-						          do (let ((queue-flags (slot-value queue-family 'queue-flags)))
-							       (when (not (zerop (logand queue-flags VK_QUEUE_GRAPHICS_BIT)))
-							         (return-from get-gpu (values gpu i)))))))
-	  ;;(declare (ignore index))
-	  (when (null gpu)
-	    (error "No graphics device available."))
-	  #+NIL(pick-graphics-gpu physical-devices surface)
+      (multiple-value-bind (gpu index)
+	  (block get-gpu
+	    (loop for gpu in physical-devices
+		  do (loop for queue-family in (queue-families gpu) for i from 0
+			   do (let ((queue-flags (slot-value queue-family 'queue-flags)))
+				(when (not (zerop (logand queue-flags VK_QUEUE_GRAPHICS_BIT)))
+				  (return-from get-gpu (values gpu i)))))))
+	;;(declare (ignore index))
+	(when (null gpu)
+	  (error "No graphics device available."))
+	#+NIL(pick-graphics-gpu physical-devices surface)
       
-	  (let* ((device (apply #'create-logical-device dpy gpu
-				:compute-queue-count compute-queue-count
-				:device-extensions
-				(list* VK_KHR_SWAPCHAIN_EXTENSION_NAME
-				       vulkan-device-extensions)
-				:rectangular-lines rectangular-lines
-				:stippled-lines stippled-lines
-				:enable-wide-lines wide-lines
-				:enable-geometry-shader (has-geometry-shader-p gpu)
-				args)))
+	(let* ((device (apply #'create-logical-device vulkan-instance gpu
+			      :compute-queue-count compute-queue-count
+			      :device-extensions
+			      (list* VK_KHR_SWAPCHAIN_EXTENSION_NAME
+				     vulkan-device-extensions)
+			      :system-gpus physical-devices
+			      :rectangular-lines rectangular-lines
+			      :stippled-lines stippled-lines
+			      :enable-wide-lines wide-lines
+			      :enable-geometry-shader (has-geometry-shader-p gpu)
+			      args)))
 
-	    (setf (default-logical-device dpy) device)
+	  (let ((command-pool (create-command-pool device index)))
+	    (push (list index command-pool) (command-pools device))
+	    (create-command-buffer device command-pool))
 
-	    (let ((command-pool (create-command-pool device index)))
-	      (push (list index command-pool) (command-pools device))
-	      (create-command-buffer device command-pool))
-
-	    (unless (or (zerop compute-queue-count)
-			(null compute-queue-count))
-              ;; todo: this needs to work for compute-queue-count > 1
-	      (multiple-value-bind (compute-queue compute-qfi)
-		  (compute-queue device)
-		(declare (ignore compute-queue))
-		(let ((command-pool (or (find-command-pool device compute-qfi)
-					(create-command-pool device compute-qfi))))
-		  (loop for i from 0 below compute-queue-count
-		     do (create-command-buffer device command-pool)))))
+	  (unless (or (zerop compute-queue-count)
+		      (null compute-queue-count))
+	    ;; todo: this needs to work for compute-queue-count > 1
+	    (multiple-value-bind (compute-queue compute-qfi)
+		(compute-queue device)
+	      (declare (ignore compute-queue))
+	      (let ((command-pool (or (find-command-pool device compute-qfi)
+				      (create-command-pool device compute-qfi))))
+		(loop for i from 0 below compute-queue-count
+		      do (create-command-buffer device command-pool)))))
 	    
-	    (setf (default-descriptor-pool dpy) (create-descriptor-pool device))
+	  (setf (default-descriptor-pool device) (create-descriptor-pool device))
+	  
+	  (initialize-memory-allocators device)
 	    
-	    (values)))))))
+	  device)))))

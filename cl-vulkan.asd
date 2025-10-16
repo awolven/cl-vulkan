@@ -54,7 +54,7 @@
    (:file "src/logical-device")
    (:file "src/fence")
    (:file "src/swapchain")
-   (:file "src/memory-pool")
+   (:file "src/memory-allocator")
    (:file "src/vulkan-application")
    (:file "src/window")
    (:file "src/surface-format")

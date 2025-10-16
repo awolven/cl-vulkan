@@ -39,7 +39,12 @@
       (with-foreign-object (p-buffer 'VkBuffer)
 	(check-vk-result (vkCreateBuffer (h device) p-info (h allocator) p-buffer))
 	(make-instance buffer-class :handle (mem-aref p-buffer 'VkBuffer)
-		       :size size :device device :allocator allocator)))))
+				    :size size :device device :allocator allocator)))))
+
+(defun destroy-buffer-1 (buffer)
+  (with-slots (device) buffer
+    (vkDestroyBuffer (h device) (h buffer) (h (allocator buffer))))
+  (values))
 
 (defun destroy-buffer (buffer)
   (with-slots (device) buffer
@@ -99,10 +104,10 @@
 (defun bind-buffer-memory (device buffer buffer-memory &optional (offset 0))
   (vkBindBufferMemory (h device) (h buffer) (h buffer-memory) offset))
 
-(defun bind-buffer-memory-resource (device buffer memory-resource &optional (offset 0))
+(defun bind-buffer-memory-block (device buffer memory-block &optional (offset 0))
   (vkBindBufferMemory (h device) (h buffer)
-                      (h (vk::allocation
-                          (vk::memory-resource-memory-pool memory-resource)))
+                      (h (allocation
+                          (memory-block-allocator memory-block)))
                       offset))
 
 (defun copy-buffer (device command-pool queue src-buffer dst-buffer size)
@@ -214,28 +219,28 @@
 
 (defun mmap-buffer (buffer array size)
   (let ((memory (allocated-memory buffer))
-	    (device (device buffer)))
+	(device (device buffer)))
     (with-foreign-object (pp-dst :pointer)
 
       (check-vk-result (vkMapMemory (h device) (h memory) 0 size 0 pp-dst))
 
       (let ((p-dst (mem-aref pp-dst :pointer)))
-	    (memcpy p-dst array size)
+	(memcpy p-dst array size)
 
-	    (with-foreign-object (p-range '(:struct VkMappedMemoryRange))
-	      (zero-struct p-range '(:struct VkMappedMemoryRange))
+	(with-foreign-object (p-range '(:struct VkMappedMemoryRange))
+	  (zero-struct p-range '(:struct VkMappedMemoryRange))
 
-	      (with-foreign-slots ((%vk::sType
-				                %vk::memory
-				                %vk::size)
-			                   p-range (:struct VkMappedMemoryRange))
+	  (with-foreign-slots ((%vk::sType
+				%vk::memory
+				%vk::size)
+			       p-range (:struct VkMappedMemoryRange))
 
-	        (setf %vk::sType  VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE
-		          %vk::memory (h memory)
-		          %vk::size VK_WHOLE_SIZE))
+	    (setf %vk::sType  VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE
+		  %vk::memory (h memory)
+		  %vk::size VK_WHOLE_SIZE))
 
-	      (check-vk-result (vkFlushMappedMemoryRanges (h device) 1 p-range))
+	  (check-vk-result (vkFlushMappedMemoryRanges (h device) 1 p-range))
 
-	      (vkUnmapMemory (h device) (h memory))
+	  (vkUnmapMemory (h device) (h memory))
 
-	      (values))))))
+	  (values))))))

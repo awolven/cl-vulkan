@@ -23,7 +23,7 @@
 
 
 
-(defun create-logical-device (system-object
+(defun create-logical-device (instance
 			      gpu &key (device-extensions (list VK_KHR_SWAPCHAIN_EXTENSION_NAME
 								#+darwin "VK_KHR_portability_subset"))
 				    (allocator +null-allocator+)
@@ -526,7 +526,7 @@
 								     :allocator allocator
 								     :max-usable-sample-count
 								     (get-max-usable-sample-count gpu))))
-					  (push device (logical-devices (get-vulkan-instance system-object)))
+					  (push device (logical-devices instance))
 					  (loop for queue in queue-indices-and-totals
 						do
 						   (push (list (first queue)

@@ -30,6 +30,37 @@
 	(first (second entry))
 	(error "Could not find device queue fo device ~S of queue-family-index ~A" device queue-family-index))))
 
+(defun acquire-queue (device queue-family-index)
+  (let ((entry (assoc queue-family-index (device-queues device))))
+    (flet ((do-error ()
+	     (error "Could not find device queue fo device ~S of queue-family-index ~A" device queue-family-index)))
+      (if entry
+	  (loop for queue-slot in (second entry)
+		for i from 0
+		with retval = nil
+		when queue-slot
+		  do (setq retval queue-slot)
+		     (setf (nth i (second entry)) nil)
+		when retval
+		  do (return retval)
+		finally (do-error))
+	  (do-error)))))
+
+(defun release-queue (queue)
+  (let ((entry (assoc (queue-family-index queue) (device-queues (device queue)))))
+    (if entry
+	(loop for queue-slot in (second entry)
+	      for i from 0
+	      unless queue-slot
+		do (setf (nth i (second entry)) queue)
+		   (return (values))
+	      finally (nconc (second entry) (list queue))
+		      (return (values)))
+	(error "Could not release queue, index not found."))))
+  
+		   
+  
+
 (defun queue-wait-idle (queue)
   (check-vk-result (vkQueueWaitIdle (h queue))))
 

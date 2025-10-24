@@ -110,7 +110,7 @@
                           (memory-block-allocator memory-block)))
                       offset))
 
-(defun copy-buffer (device command-pool queue src-buffer dst-buffer size)
+(defun copy-buffer (device command-pool queue src-buffer src-offset dst-buffer dst-offset size)
   (with-vk-struct (p-alloc-info VkCommandBufferAllocateInfo)
     (with-foreign-slots ((%vk::level
 			  %vk::commandPool
@@ -121,6 +121,9 @@
 	    %vk::commandBufferCount 1)
 
       (with-foreign-object (p-command-buffer 'VkCommandBuffer)
+	;;(print "AllocateCommandBuffers")
+	;;(print command-pool)
+	;;(finish-output)
 	(vkAllocateCommandBuffers (h device) p-alloc-info p-command-buffer)
 	(let ((command-buffer (make-instance 'command-buffer :handle (mem-aref p-command-buffer 'VkCommandBuffer)
 					     :device device :command-pool command-pool)))
@@ -128,19 +131,31 @@
 	    (with-foreign-slots ((%vk::flags)
 				 p-begin-info (:struct VkCommandBufferBeginInfo))
 	      (setf %vk::flags VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+	      ;;(print "BeginCommandBuffer")
+	      ;;(finish-output)
 	      (vkBeginCommandBuffer (h command-buffer) p-begin-info)
 	      (with-vk-struct (p-copy-region VkBufferCopy)
 		(with-foreign-slots ((%vk::srcOffset
 				      %vk::dstOffset
 				      %vk::size)
 				     p-copy-region (:struct VkBufferCopy))
-		  (setf %vk::srcOffset 0
-			%vk::dstOffset 0
+		  (setf %vk::srcOffset src-offset
+			%vk::dstOffset dst-offset
 			%vk::size size)
+		  ;;(print "CmdCopyBuffer")
+		  ;;(finish-output)
 		  (vkCmdCopyBuffer (h command-buffer) (h src-buffer) (h dst-buffer) 1 p-copy-region)
+		  ;;(print "EndCommandBuffer")
+		  ;;(finish-output)
 		  (vkEndCommandBuffer (h command-buffer))
+		  ;;(print "queue-submit-1")
+		  ;;(finish-output)
 		  (queue-submit1 queue command-buffer)
+		  ;;(print "QueueWaitIdle")
+		  ;;(finish-output)
 		  (vkQueueWaitIdle (h queue))
+		  ;;(print "FreeCommandBuffers")
+		  ;;(finish-output)
 		  (vkFreeCommandBuffers (h device) (h command-pool) 1 p-command-buffer)))))))))
   (values))
 
@@ -177,7 +192,7 @@
 	   (queue (find-queue device queue-family-index))
 	   (command-pool (find-command-pool device queue-family-index)))
       (bind-buffer-memory device buffer buffer-memory)
-      (copy-buffer device command-pool queue staging-buffer buffer size)
+      (copy-buffer device command-pool queue staging-buffer 0 buffer 0 size)
       (vkDestroyBuffer (h device) (h staging-buffer) (h allocator))
       (vkFreeMemory (h device) (h staging-buffer-memory) (h allocator))
       (setf (allocated-memory buffer) buffer-memory)

@@ -1,9 +1,6 @@
 (in-package :vk)
 
-;; this is the amount of memory vulkan can use when not using the allocator:
-(defparameter *reserved-memory-size* (expt 2 29))
-
-(defvar *alignment-size* 256)
+(defvar *alignment-size* 1024)
 
 (defun aligned-size (size)
   (if (zerop (mod size *alignment-size*))
@@ -70,7 +67,9 @@
 			VK_BUFFER_USAGE_INDEX_BUFFER_BIT
 			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
 			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
-			VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT))
+			VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+			VK_BUFFER_USAGE_TRANSFER_DST_BIT))
 	 (test-buffer (create-buffer-1 device (aligned-size 1) usage)))
     (let ((memory-type-index
 	    (with-vk-struct (p-requirements VkMemoryRequirements)
@@ -84,6 +83,7 @@
 	       properties))))
       (with-vk-struct (p-requirements VkMemoryRequirements)
 	(vkGetBufferMemoryRequirements (h device) (h test-buffer) p-requirements)
+	#+NIL
 	(setf *alignment-size*
 	      (foreign-slot-value p-requirements 
 				  '(:struct VkMemoryRequirements) '%vk::alignment))
@@ -112,8 +112,8 @@
 						   nil
 						   (list size))
 					       (list size)))
-				       '#.(loop for i from 32 downto 0
-						collect (expt 2 i)))))
+				       '#.(loop for i from 32 downto 11
+						collect (- (expt 2 i) 1024)))))
 			  (when max-size
 			    (pushnew max-size trials))
 			  (when min-size
@@ -145,9 +145,7 @@
 					  memory usage actual-size alignment
 					  max-size
 					  (min-size *alignment-size*)
-					  (properties
-                                           (logior VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-                                                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)))
+					  properties)
   (declare (ignore initargs))
   
   (setf (memory-allocator-device instance) device)
@@ -177,6 +175,25 @@
       (setf (memory-allocator-big-buffer instance) big-buffer)))
   (values))
   
+(defun get-byte-counts (allocator)
+  (let* ((total (slot-value (allocation allocator) 'vk::size))
+	 (used (let ((sum 0))
+		 (maphash #'(lambda (k v)
+			      (declare (ignore k))
+			      (incf sum (memory-block-size v)))
+			  (memory-allocator-allocated allocator))
+		 sum))
+	 (free (- total used)))
+    (values total used free)))
+
+(defmethod print-object ((object memory-allocator) stream)
+  (print-unreadable-object (object stream :type t :identity t)
+    (multiple-value-bind (total used) (get-byte-counts object)
+      (format stream " total: ~:d used: ~:d" total used))))
+
+
+	  
+
 
 (defconstant +miniscule-allocation+ #.(expt 2 11)) ;; >= alignment size and <= 2kb
 (defconstant +tiny-allocation+ #.(expt 2 13)) ;; > 2kb and <= 8kb
@@ -226,9 +243,10 @@
 		   (error () nil))
 	       (when memory
 		 (make-instance 'memory-allocator
+				:device device
 				:memory memory
 				:usage usage
-				:size actual-size
+				:actual-size actual-size
 				:alignment alignment
 				:properties properties))))
 	   
@@ -240,19 +258,21 @@
 		   when allocation
 		     do (return allocation)
 		   finally (return (let ((new-alctr
-					   (or (maybe-make-allocator
-						(logior VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-							VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-							VK_MEMORY_PROPERTY_HOST_CACHED_BIT
-							properties))
-					       (maybe-make-allocator
-						(logior VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-							VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-							properties))
-					       (maybe-make-allocator
-						(logior VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-							properties))
-					       (maybe-make-allocator properties))))
+					   (if (logtest VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT properties)
+					       (maybe-make-allocator properties)
+					       (or (maybe-make-allocator
+						    (logior VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+							    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+							    VK_MEMORY_PROPERTY_HOST_CACHED_BIT
+							    properties))
+						   (maybe-make-allocator
+						    (logior VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+							    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+							    properties))
+						   (maybe-make-allocator
+						    (logior VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+							    properties))
+						   (maybe-make-allocator properties)))))
 				     (when new-alctr
 				       (push new-alctr (cdr allocators))
 				       (acquire new-alctr)))))))
@@ -262,12 +282,14 @@
 	(or (let ((dlas (device-local-allocators device)))
 	      (and dlas (search-allocators dlas)))
 	    (let ((ndlas (non-device-local-allocators device)))
-	      (and ndlas (search-allocators ndlas))))
+	      (and ndlas (search-allocators ndlas)))
+	    (error "failed to allocate ~S" size))
 	
 	(or (let ((ndlas (non-device-local-allocators device)))
 	      (and ndlas (search-allocators ndlas)))
 	    (let ((dlas (device-local-allocators device)))
-	      (and dlas (search-allocators dlas)))))))
+	      (and dlas (search-allocators dlas)))
+	    (error "failed to allocate ~S" size)))))
 				  
 
 
@@ -332,6 +354,7 @@
 	    ((<= size +outlandish-allocation+)
 	     (princ "outlandish" stream))
 	    (t (princ "obscene" stream))))
+    (format stream " ~:d" (memory-block-size object))
     (when (memory-block-used? object)
       (princ " used" stream))
     object))
@@ -513,12 +536,12 @@
 	    do (if (device-local-allocators device)
 		   (push (make-instance 'memory-allocator
 					:device device
-					:properties (cdr type))
+					:properties VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 			 (device-local-allocators device))
 		   (setf (device-local-allocators device)
 			 (list nil (make-instance 'memory-allocator
 						  :device device
-						  :properties (cdr type)))))
+						  :properties VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))))
 	  unless (logtest VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT (cdr type))
 	    do (if (non-device-local-allocators device)
 		   (push (make-instance 'memory-allocator
@@ -577,7 +600,7 @@
 (defun %acquire-memory-obscene (allocator size)
   (search-for-block allocator (memory-allocator-obscene-free allocator) size))
 
-(defun destroy-memory-pools (device)
+(defun destroy-memory-allocators (device)
   (loop for alctr in (append (rest (non-device-local-allocators device))
 			     (rest (device-local-allocators device)))
 	do

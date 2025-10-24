@@ -106,10 +106,19 @@
 
     #+darwin(pushnew "VK_KHR_portability_enumeration" extension-names :test #'string=)
     #+darwin(pushnew "VK_KHR_get_physical_device_properties2" extension-names :test #'string=)
+
     
     (when (and (numberp *debug*) (> *debug* 1)
 	       (find "VK_LAYER_LUNARG_api_dump" available-layers :test #'string=))
       (pushnew "VK_LAYER_LUNARG_api_dump" layer-names :test #'string=))
+
+    (when (and (numberp *debug*) (> *debug* 1)
+	       (find "VK_EXT_debug_utils" available-layers :test #'string=))
+      (pushnew "VK_EXT_debug_utils" layer-names :test #'string=))
+
+    (when (and (numberp *debug*) (> *debug* 1)
+	       (find "VK_EXT_debug_report" available-layers :test #'string=))
+      (pushnew "VK_EXT_debug_report" layer-names :test #'string=))
     
     (loop for layer in layer-names
 	  unless (find layer available-layers :test #'string=)

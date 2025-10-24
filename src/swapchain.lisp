@@ -21,10 +21,8 @@
 
 (in-package :vk)
 
-(defun create-frame-resources (swapchain queue-family-index &key (allocator +null-allocator+))
-  (let* ((device (device swapchain))
-	 (queued-frames (number-of-images swapchain))
-	 (array (make-array queued-frames)))
+(defun create-frame-resources (device window number-of-frames queue-family-index &key (allocator +null-allocator+))
+  (let* ((array (make-array number-of-frames)))
     (flet ((create-semaphore ()
 	     (with-vk-struct (p-info VkSemaphoreCreateInfo)
 	       (with-foreign-objects ((p-semaphore 'VkSemaphore))
@@ -34,8 +32,8 @@
 				:handle (mem-aref p-semaphore 'VkSemaphore)
 				:device device
 				:allocator allocator)))))
-      (setf (frame-resources swapchain) array)
-      (loop for i from 0 below queued-frames
+      (setf (frame-resources window) array)
+      (loop for i from 0 below number-of-frames
 	    do (setf (aref array i)
 		     (let ((command-pool (create-command-pool device queue-family-index)))
 		       (make-instance 'frame-resources
@@ -63,6 +61,7 @@
 	             (vkDestroySemaphore (h device) (h sem) (h (allocator sem))))
 	           (let ((sem (present-complete-semaphore frame-resource)))
 	             (vkDestroySemaphore (h device) (h sem) (h (allocator sem))))
+		   #+NIL
 	           (let ((command-pool (frame-command-pool frame-resource)))
 	             (free-command-buffers command-pool)
 	             (destroy-command-pool command-pool))
@@ -149,8 +148,6 @@
 
 	    (with-foreign-object (p-swapchain 'VkSwapchainKHR)
 	      (check-vk-result (vkCreateSwapchainKHR (h device) p-create-info (h allocator) p-swapchain))
-	      (when old-swapchain
-		(destroy-swapchain old-swapchain))
 	      (let* ((swapchain (make-instance 'swapchain :handle (mem-aref p-swapchain 'VkSwapchainKHR)
 							  :device device
 							  :width fb-width
@@ -166,9 +163,11 @@
   (setf (swapchain window) swapchain)
   (setf (images swapchain) (get-swapchain-images-khr swapchain))
   (setf (color-image-views swapchain) (create-image-views swapchain))
-  (setf (multisample-image-view swapchain) (create-color-resources (device swapchain)
-								   (fb-width swapchain)
-								   (fb-height swapchain)))
+  (multiple-value-bind (image image-view) (create-color-resources (device swapchain)
+								  (fb-width swapchain)
+								  (fb-height swapchain))
+    (setf (multisample-image swapchain) image)
+    (setf (multisample-image-view swapchain) image-view))
   (setf (depth-images swapchain) (list (create-depth-image (device swapchain) ;; 3d-depth image
 							   (fb-width swapchain)
 							   (fb-height swapchain)
@@ -181,18 +180,18 @@
 								     (first (depth-images swapchain)))
 					    (create-depth-image-view (device swapchain)
 								     (second (depth-images swapchain)))))
-					    
   swapchain)
 
 (defun create-color-resources (device width height)
-  (let ((image (create-image device width height :samples (max-usable-sample-count device) :usage (logior VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT))))
-  (create-image-view device image)))
+  (let ((image (create-image device width height :samples (max-usable-sample-count device)
+						 :usage (logior VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT
+								VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT))))
+    (values image (create-image-view device image))))
 
 (defun destroy-swapchain-resources (swapchain)
   (with-slots (device) swapchain
 
-    (device-wait-idle device)
-
+    ;;(device-wait-idle device)
     (when (depth-image-views swapchain)
       (mapcar #'destroy-image-view (depth-image-views swapchain))
       (setf (depth-image-views swapchain) nil))
@@ -201,21 +200,25 @@
       (mapcar #'destroy-image (depth-images swapchain))
       (setf (depth-images swapchain) nil))
 
+    (when (multisample-image swapchain)
+      (destroy-image (multisample-image swapchain)))
+
+    (when (multisample-image-view swapchain)
+      (destroy-image-view (multisample-image-view swapchain)))
+
     (when (color-image-views swapchain)
       (loop for image-view across (color-image-views swapchain)
 	        do (destroy-image-view image-view)
-	           (setf (color-image-views swapchain) nil)))
-	
+	    finally (setf (color-image-views swapchain) nil)))
     (destroy-framebuffers swapchain)
 	
-    ;; destroys semaphores and fence
-    (destroy-frame-resources swapchain)
     (values)))
 
 (defun recreate-swapchain (window device render-pass swapchain fb-width fb-height)
   (declare (ignore fb-width fb-height))
   (let ((fb-width)
-	(fb-height))
+	(fb-height)
+	(old-swapchain swapchain))
     (flet ((try-recreate ()
 
 	     (multiple-value-setq (fb-width fb-height) (clui:window-framebuffer-size window))
@@ -231,8 +234,7 @@
 					 :requested-image-format (window-desired-format window)
 					 :requested-color-space (window-desired-color-space window)))
 			(present-mode (get-physical-device-surface-present-mode
-				       (physical-device device) (render-surface window)))
-			(old-swapchain swapchain))
+				       (physical-device device) (render-surface window))))
 		
 		   (setf swapchain (create-swapchain device window
 						     fb-width fb-height
@@ -241,13 +243,14 @@
 
 		
 		   (setup-framebuffers device render-pass swapchain)
-		   (create-frame-resources swapchain queue-family-index)
 		   t)))))
 	
-	(loop until (try-recreate)
-	   do #+glfw(glfwWaitEvents)
-	     #-glfw(clui::wait-events (clui::window-display window)))
-	(values))))
+      (loop until (try-recreate)
+	    do #+glfw(glfwWaitEvents)
+	    #-glfw(clui::wait-events (clui::window-display window)))
+
+      (setf (swapchain-recreated? window) old-swapchain)
+      (values))))
 
 (defun destroy-swapchain (swapchain)
   (with-slots (device) swapchain
@@ -257,10 +260,8 @@
 	(vkDestroySwapchainKHR (h device) (h swapchain) (h allocator)))))
   (values))
 
-(defun wait-for-fence (swapchain current-frame)
-  (let* ((device (device swapchain))
-	 (frame-resource (elt (frame-resources swapchain) current-frame))
-	 (fence (fence frame-resource)))
+(defun wait-for-fence (device frame-resources current-frame)
+  (let* ((fence (fence (elt frame-resources current-frame))))
 
     (with-foreign-object (p-fence 'VkFence)
       (setf (mem-aref p-fence 'VkFence) (h fence))
@@ -279,16 +280,15 @@
        break))))
 
 
-(defun frame-begin (swapchain render-pass current-frame clear-value command-pool)
+(defun frame-begin (swapchain frame-resource render-pass clear-value command-pool)
   (declare (ignore command-pool))
   (let* ((device (device swapchain))
-	 (frame-resource (elt (frame-resources swapchain) current-frame))
 	 (command-buffer (frame-command-buffer frame-resource))
 	 (present-complete-sem (present-complete-semaphore frame-resource))
 	 (image-index)
 	 (fence (fence frame-resource)))
 
-    (wait-for-fence swapchain current-frame)
+    ;;(wait-for-fence device current-frame)
 
     (with-foreign-object (p-fence 'VkFence)
       (setf (mem-aref p-fence 'VkFence) (h fence))
@@ -418,10 +418,8 @@
 	  (vkCmdBeginRenderPass (h command-buffer) p-info VK_SUBPASS_CONTENTS_INLINE))))
     image-index))
 
-(defun frame-end (swapchain queue current-frame)
-  (let* ((device (device swapchain))
-	 (frame-resource (elt (frame-resources swapchain) current-frame))
-	 (fence (fence frame-resource))
+(defun frame-end (device queue frame-resource)
+  (let* ((fence (fence frame-resource))
 	 (current-command-buffer (frame-command-buffer frame-resource))
 	 (present-complete-sem (present-complete-semaphore frame-resource))
 	 (render-complete-sem (render-complete-semaphore frame-resource)))
@@ -441,37 +439,34 @@
 
     (values)))
 
-(defun frame-present (swapchain queue current-frame image-index window)
-  (let ((frame-resource (elt (frame-resources swapchain) current-frame)))
-    
-    (with-foreign-objects ((p-indices :uint32)
-			   (p-swapchain 'VkSwapchainKHR)
-			   (p-wait-semaphores 'VkSemaphore))
+(defun frame-present (swapchain frame-resource queue image-index window)
+  (with-foreign-objects ((p-indices :uint32)
+			 (p-swapchain 'VkSwapchainKHR)
+			 (p-wait-semaphores 'VkSemaphore))
 	      
-      (setf (mem-aref p-indices :uint32) image-index
-	    (mem-aref p-swapchain 'VkSwapchainKHR) (h swapchain)
-	    (mem-aref p-wait-semaphores 'VkSemaphore)
-	    (h (render-complete-semaphore frame-resource)))
+    (setf (mem-aref p-indices :uint32) image-index
+	  (mem-aref p-swapchain 'VkSwapchainKHR) (h swapchain)
+	  (mem-aref p-wait-semaphores 'VkSemaphore)
+	  (h (render-complete-semaphore frame-resource)))
     
-      (with-vk-struct (p-info VkPresentInfoKHR)
-	(with-foreign-slots ((%vk::waitSemaphoreCount
-			      %vk::pWaitSemaphores
-			      %vk::swapchainCount
-			      %vk::pSwapchains
-			      %vk::pImageIndices)
-			     p-info
-			     (:struct VkPresentInfoKHR))
+    (with-vk-struct (p-info VkPresentInfoKHR)
+      (with-foreign-slots ((%vk::waitSemaphoreCount
+			    %vk::pWaitSemaphores
+			    %vk::swapchainCount
+			    %vk::pSwapchains
+			    %vk::pImageIndices)
+			   p-info
+			   (:struct VkPresentInfoKHR))
 	
-	  (setf %vk::waitSemaphoreCount 1
-		%vk::pWaitSemaphores p-wait-semaphores
-		%vk::swapchainCount 1
-		%vk::pSwapchains p-swapchain
-		%vk::pImageIndices p-indices)
+	(setf %vk::waitSemaphoreCount 1
+	      %vk::pWaitSemaphores p-wait-semaphores
+	      %vk::swapchainCount 1
+	      %vk::pSwapchains p-swapchain
+	      %vk::pImageIndices p-indices)
 	
-	  (let ((result (vkQueuePresentKHR (h queue) p-info)))
+	(let ((result (vkQueuePresentKHR (h queue) p-info)))
 	  
-	    (if (eq result VK_ERROR_OUT_OF_DATE_KHR)
-		(setf (recreate-swapchain? window) t)
-		(check-vk-result result)))))))
-
+	  (if (eq result VK_ERROR_OUT_OF_DATE_KHR)
+	      (setf (recreate-swapchain? window) t)
+	      (check-vk-result result))))))
   (values))

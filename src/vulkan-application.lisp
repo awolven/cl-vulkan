@@ -25,7 +25,7 @@
 
     (device-wait-idle device)
 
-    (destroy-memory-pools dpy)
+    (destroy-memory-allocators device)
 
     (vkDestroyDescriptorPool (h device)
                              vk::VK_NULL_HANDLE

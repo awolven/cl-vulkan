@@ -65,6 +65,8 @@
    (command-pools :accessor command-pools :initform nil)
    (descriptor-pools :accessor descriptor-pools :initform nil)
    (queues :initform nil :accessor device-queues)
+   (transfer-queue :initform nil :accessor device-transfer-queue)
+   (transfer-queue-lock :initform (bt:make-lock "transfer queue lock") :accessor device-transfer-queue-lock)
    (stock-render-passess :initform (make-hash-table) :accessor stock-render-passes)
    (max-usable-sample-count :initform VK_SAMPLE_COUNT_1_BIT
 			    :initarg :max-usable-sample-count
@@ -87,14 +89,15 @@
    (number-of-images :accessor number-of-images)
    (images :accessor images)
    (color-image-views :accessor color-image-views)
-   (multisample-image-view :accessor multisample-image-view)
+   (multisample-image :accessor multisample-image :initform nil)
+   (multisample-image-view :accessor multisample-image-view :initform nil)
    (depth-image-views :accessor depth-image-views)
    (depth-images :accessor depth-images)
    (fb-width  :initarg :width  :reader fb-width)
    (fb-height :initarg :height :reader fb-height)
    (framebuffers :accessor framebuffers)
    (render-pass :accessor render-pass :initarg :render-pass)
-   (frame-resources :accessor frame-resources)
+   
    (current-frame :accessor current-frame :initform 0)))
 
 (defclass frame-resources ()
@@ -109,26 +112,39 @@
    (command-pool :reader frame-command-pool :initarg :command-pool)))
 
 (defclass vulkan-window-mixin (logical-device-mixin)
-  ((initialized? :initform nil :accessor window-initialized?)
-   (swapchain :initform nil :accessor swapchain)
-   (render-pass :initform nil :accessor render-pass)
-   (desired-format :initform VK_FORMAT_B8G8R8A8_UNORM :accessor window-desired-format
+  ((initialized? :initform nil
+		 :accessor window-initialized?)
+   (swapchain :initform nil
+	      :accessor swapchain)
+   (frame-resources :initform nil
+		    :accessor frame-resources)
+   (render-pass :initform nil
+		:accessor render-pass)
+   (desired-format :initform VK_FORMAT_B8G8R8A8_UNORM
+		   :accessor window-desired-format
 		   :initarg :format)
    (desired-color-space :initform VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
 			:accessor window-desired-color-space
 			:initarg :color-space)
-   (application :accessor application :initarg :app)
-   (surface :initform nil :accessor render-surface)
+   (application :accessor application
+		:initarg :app)
+   (surface :initform nil
+	    :accessor render-surface)
    (command-pool :accessor command-pool)
    (clear-value
     :initform (make-array 4 :element-type 'single-float
 			  :initial-contents (list 0.45f0 0.55f0 0.60f0 1.0f0))
     :accessor clear-value)
-   (recreate-swapchain? :initform nil :accessor recreate-swapchain?)
-   (new-width :initform nil :accessor new-width)
-   (new-height :initform nil :accessor new-height)
-   
-   (frame-data :initform nil :accessor window-frame-data)
+   (recreate-swapchain? :initform nil
+			:accessor recreate-swapchain?)
+   (swapchain-recreated? :initform nil
+			 :accessor swapchain-recreated?)
+   (new-width :initform nil
+	      :accessor new-width)
+   (new-height :initform nil
+	       :accessor new-height)
+   (frame-data :initform nil
+	       :accessor window-frame-data)
    (image-index :initform 0)
    (current-frame :initform 0)))
 

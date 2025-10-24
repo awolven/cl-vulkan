@@ -21,6 +21,8 @@
 
 (in-package :vk)
 
+
+
 (defun create-command-pool (device queue-family-index &key (allocator +null-allocator+))
   (with-vk-struct (p-info VkCommandPoolCreateInfo)
     (with-foreign-slots ((%vk::flags %vk::queueFamilyIndex)
@@ -29,13 +31,10 @@
 	    %vk::queueFamilyIndex queue-family-index)
       (with-foreign-object (p-command-pool 'VkCommandPool)
 	(check-vk-result (vkCreateCommandPool (h device) p-info (h allocator) p-command-pool))
-	(let ((command-pool
-	       (make-instance 'command-pool :handle (mem-aref p-command-pool 'VkCommandPool)
-			      :device device
-			      :allocator allocator
-			      :index queue-family-index)))
-	  (push (list queue-family-index command-pool) (command-pools device))
-	  command-pool)))))
+	(make-instance 'command-pool :handle (mem-aref p-command-pool 'VkCommandPool)
+				     :device device
+				     :allocator allocator
+				     :index queue-family-index)))))
 
 (defun find-command-pool (device queue-family-index)
   (let ((entry (assoc queue-family-index (command-pools device))))

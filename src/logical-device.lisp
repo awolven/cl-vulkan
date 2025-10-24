@@ -21,7 +21,23 @@
 
 (in-package :vk)
 
+(defmacro with-transfer-queue ((queue-sym device) &body body)
+  (let ((device-sym (gensym)))
+    `(let ((,device-sym ,device))
+       (bt:with-lock-held ((device-transfer-queue-lock ,device-sym))
+	 (let ((,queue-sym (device-transfer-queue ,device-sym)))
+	   ,@body)))))
 
+(defmacro with-command-pool ((pool-sym device) &body body)
+  (let ((device-sym (gensym)))
+    `(let* ((,device-sym ,device)
+	    (,pool-sym (create-command-pool ,device-sym 0)))
+       (unwind-protect
+	    ,@body
+	 (destroy-command-pool ,pool-sym)))))
+       
+	   
+    
 
 (defun create-logical-device (instance
 			      gpu &key (device-extensions (list VK_KHR_SWAPCHAIN_EXTENSION_NAME
@@ -29,7 +45,7 @@
 				    (allocator +null-allocator+)
 				    (graphics-queue-count 1)
 				    (compute-queue-count 0)
-				    (transfer-queue-count 0)
+				    (transfer-queue-count 1)
 				    (sparse-binding-queue-count 0)
 				    (rectangular-lines nil)
 				    (bresenham-lines nil)
@@ -474,7 +490,7 @@
 					             %vk::queueFamilyIndex (car queue)
 					             %vk::queueCount (cadr queue)
 					             %vk::pQueuePriorities p-queue-priorities))))
-			    
+
 				  (with-vk-struct (p-create-info VkDeviceCreateInfo)
 				    (let ((p-lr-features
 					    (if line-rasterization
@@ -534,6 +550,9 @@
 							             collect
 							             (get-device-queue device (first queue) i (third queue))))
 							 (device-queues device)))
+					  (when (> transfer-queue-count 0)
+					    (setf (device-transfer-queue device)
+						  (acquire-queue device (first transfer-queue-family-index))))
 					  device)))))
 
 			     (loop for pointer in allocs do (foreign-free pointer))))))))

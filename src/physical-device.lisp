@@ -116,29 +116,29 @@
       (with-foreign-object (p-queue-family-properties '(:struct VkQueueFamilyProperties) count)
 	(vkGetPhysicalDeviceQueueFamilyProperties (h gpu) p-queue-family-property-count p-queue-family-properties)
 	(loop for i from 0 below (mem-aref p-queue-family-property-count :uint32)
-	   collect (with-foreign-slots ((%vk::queueFlags
-					 %vk::queueCount
-					 %vk::timestampValidBits)
-					(mem-aptr p-queue-family-properties '(:struct VkQueueFamilyProperties) i)
-					(:struct VkQueueFamilyProperties))
-		     (make-instance 'queue-family
-				    :queue-flags %vk::queueFlags ;; capabilities of these queues
-				    :queue-count %vk::queueCount ;; number of queues in queue family
-				    :timestamp-valid-bits %vk::timestampValidBits
-				    :min-image-transfer-granularity
-				    (make-instance 'extent-3d
-						   :width (foreign-slot-value (foreign-slot-pointer p-queue-family-properties
-												    '(:struct VkQueueFamilyProperties)
-												    '%vk::minImageTransferGranularity)
-									      '(:struct VkExtent3D) '%vk::width)
-						   :height (foreign-slot-value (foreign-slot-pointer p-queue-family-properties
-												    '(:struct VkQueueFamilyProperties)
-												    '%vk::minImageTransferGranularity)
-									       '(:struct VkExtent3D) '%vk::height)
-						   :depth (foreign-slot-value (foreign-slot-pointer p-queue-family-properties
-												    '(:struct VkQueueFamilyProperties)
-												    '%vk::minImageTransferGranularity)
-									      '(:struct VkExtent3D) '%vk::depth)))))))))
+	      collect (with-foreign-slots ((%vk::queueFlags
+					    %vk::queueCount
+					    %vk::timestampValidBits)
+					   (mem-aptr p-queue-family-properties '(:struct VkQueueFamilyProperties) i)
+					   (:struct VkQueueFamilyProperties))
+			(make-instance 'queue-family
+				       :queue-flags %vk::queueFlags ;; capabilities of these queues
+				       :queue-count %vk::queueCount ;; number of queues in queue family
+				       :timestamp-valid-bits %vk::timestampValidBits
+				       :min-image-transfer-granularity
+				       (make-instance 'extent-3d
+						      :width (foreign-slot-value (foreign-slot-pointer p-queue-family-properties
+												       '(:struct VkQueueFamilyProperties)
+												       '%vk::minImageTransferGranularity)
+										 '(:struct VkExtent3D) '%vk::width)
+						      :height (foreign-slot-value (foreign-slot-pointer p-queue-family-properties
+													'(:struct VkQueueFamilyProperties)
+													'%vk::minImageTransferGranularity)
+										  '(:struct VkExtent3D) '%vk::height)
+						      :depth (foreign-slot-value (foreign-slot-pointer p-queue-family-properties
+												       '(:struct VkQueueFamilyProperties)
+												       '%vk::minImageTransferGranularity)
+										 '(:struct VkExtent3D) '%vk::depth)))))))))
 
 (defun enumerate-physical-devices (instance)
   (with-foreign-object (p-count :uint32)

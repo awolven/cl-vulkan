@@ -71,8 +71,8 @@
   (:linux "libglfw.so.3"))
 
 (cffi:define-foreign-library vulkan-loader
-  (:linux "libvulkan.so.1")
-  (:darwin "libvulkan.1.dylib")
+  (:linux (:or "libvulkan.so" "libvulkan.so.1"))
+  (:darwin (:or "libvulkan.dylib" "libvulkan.1.dylib"))
   (:windows "vulkan-1.dll"))
 
 #+glfw

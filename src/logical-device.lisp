@@ -44,7 +44,7 @@
 								#+darwin "VK_KHR_portability_subset"))
 				    (allocator +null-allocator+)
 				    (graphics-queue-count 1)
-				    (compute-queue-count 0)
+				    (compute-queue-count 1)
 				    (transfer-queue-count 1)
 				    (sparse-binding-queue-count 0)
 				    (rectangular-lines nil)
@@ -416,149 +416,127 @@
 			 do (setf (mem-aref p-device-extensions :pointer i) (foreign-string-alloc extension)))
 		   ;; todo: as it becomes clearer how multiple queues are used in Vulkan,
 		   ;; rework and simplify this section of create-device
-		   (labels ((dedicated? (desired-flag queue-family)
-			      (eq desired-flag (queue-flags queue-family)))
-			    (supports? (desired-flag queue-family)
-			      (not (zerop (logand (queue-flags queue-family) desired-flag))))
-			    (find-best (desired-flag desired-count)
-			      (let ((dedicated-index (search (list desired-flag) (queue-families gpu)
-							     :test #'(lambda (desired-flag queue-family)
-								       (and (dedicated? desired-flag queue-family)
-									    (>= (queue-count queue-family) desired-count)))))
-				    (multipurpose-index (search (list desired-flag) (queue-families gpu)
-								:test #'(lambda (desired-flag queue-family)
-									  (and (supports? desired-flag queue-family)
-									       (>= (queue-count queue-family) desired-count))))))
-				(if dedicated-index
-				    (list dedicated-index desired-count :dedicated)
-				    (if multipurpose-index
-					(list multipurpose-index desired-count :multipurpose))))))
-				
-		     (let* ((graphics-queue-family-index
-			      (when (> graphics-queue-count 0) (find-best VK_QUEUE_GRAPHICS_BIT graphics-queue-count)))
-			
-			    (compute-queue-family-index
-			      (when (> compute-queue-count 0) (find-best VK_QUEUE_COMPUTE_BIT compute-queue-count)))
-			
-			    (transfer-queue-family-index
-			      (when (> transfer-queue-count 0) (find-best VK_QUEUE_TRANSFER_BIT transfer-queue-count)))
-			
-			    (sparse-binding-queue-family-index
-			      (when (> sparse-binding-queue-count 0) (find-best VK_QUEUE_SPARSE_BINDING_BIT
-										sparse-binding-queue-count)))
-			    (queue-indices-and-totals
-			      (loop for entry in (list graphics-queue-family-index
-						       compute-queue-family-index
-						       transfer-queue-family-index
-						       sparse-binding-queue-family-index)
-			            with result = (list :result)
-				    ;; why do I feel like there is a simple map reduce way of solving this!
-			            do (when entry
-					 (let ((result-entry (assoc (first entry) (cdr result))))
-					   (if (not result-entry)
-				               (push (list (first entry) (second entry) (third entry)) (cdr result))
-				               (setf (second result-entry) (+ (second entry) (second result-entry))))))
-			            finally (return
-				              (mapcar #'(lambda (entry)
-							  (when entry
-						            (let ((count (queue-count (elt (queue-families gpu) (car entry)))))
-						              (when (> (cadr entry) count)
-								(error "Not enough queues available at queue index ~a" (car entry))))
-						            entry))
-					              (cdr result))))))
+		   (let ((queue-specs ())
+			 (total (+ graphics-queue-count
+				   transfer-queue-count
+				   compute-queue-count
+				   sparse-binding-queue-count)))
+		     (block queue-specs
+		       (loop for queue-family in (queue-families gpu)
+			     for i from 0
+			     do (let ((entry (cadr (assoc i queue-specs))))
+				  (when (not entry)
+				    (push (list i (setq entry (list (queue-flags queue-family) 0))) queue-specs))
+				  (let ((queue-count (queue-count queue-family))
+					(queue-flags (queue-flags queue-family)))
+				    (loop for bit in (list (list VK_QUEUE_SPARSE_BINDING_BIT sparse-binding-queue-count 0)
+							   (list VK_QUEUE_COMPUTE_BIT compute-queue-count 0)
+							   (list VK_QUEUE_TRANSFER_BIT transfer-queue-count 0)
+							   (list VK_QUEUE_GRAPHICS_BIT graphics-queue-count 0))
+					  when (= queue-count 0)
+					    do (return)
+					  unless (= (second bit) (third bit))
+					    do (when (logtest (first bit) queue-flags)
+						 (incf (third bit))
+						 (incf (second entry))
+						 (decf total)
+						 (decf queue-count))
+					  when (= total 0)
+					    do (return-from queue-specs))))))
 
-		       (with-foreign-object (p-queue-infos '(:struct VkDeviceQueueCreateInfo)
-					     (length queue-indices-and-totals))
-			 (let ((allocs nil))
-			   (unwind-protect
-				(progn
-				  (loop for queue in queue-indices-and-totals
-					for x from 0
-					do (zero-struct (mem-aptr p-queue-infos '(:struct VkDeviceQueueCreateInfo) x)
+		     (with-foreign-object (p-queue-infos '(:struct VkDeviceQueueCreateInfo)
+					   (length queue-specs))
+		       (let ((allocs nil))
+			 (unwind-protect
+			      (progn
+
+				(loop for queue-spec in queue-specs
+				      for i from 0
+				      do (let ((count (cadr (cadr queue-spec))))
+					   (zero-struct (mem-aptr p-queue-infos '(:struct VkDeviceQueueCreateInfo) i)
 							'(:struct VkDeviceQueueCreateInfo))
-					   (let ((p-queue-priorities (foreign-alloc :float :count (cadr queue))))
-				             (push p-queue-priorities allocs)
-				             (loop for i from 0 below (cadr queue)
-						   do (setf (mem-aref p-queue-priorities :float i) 1.0f0))
-				             (with-foreign-slots ((%vk::sType
+					   (let ((p-queue-priorities (foreign-alloc :float :count count)))
+					     (push p-queue-priorities allocs)
+					     (loop for j from 0 below count
+						   do (setf (mem-aref p-queue-priorities :float j) 1.0f0))
+					     (with-foreign-slots ((%vk::sType
 								   %vk::queueFamilyIndex
 								   %vk::queueCount
 								   %vk::pQueuePriorities)
-								  (mem-aptr p-queue-infos '(:struct VkDeviceQueueCreateInfo) x)
+								  (mem-aptr p-queue-infos '(:struct VkDeviceQueueCreateInfo) i)
 								  (:struct VkDeviceQueueCreateInfo))
-				               (setf %vk::sType VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO
-					             %vk::queueFamilyIndex (car queue)
-					             %vk::queueCount (cadr queue)
-					             %vk::pQueuePriorities p-queue-priorities))))
+					       (setf %vk::sType VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO
+						     %vk::queueFamilyIndex (car queue-spec)
+						     %vk::queueCount count
+						     %vk::pQueuePriorities p-queue-priorities)))))
 
-				  (with-vk-struct (p-create-info VkDeviceCreateInfo)
-				    (let ((p-lr-features
-					    (if line-rasterization
-						(foreign-alloc
-						 '(:struct %vk::VkPhysicalDeviceLineRasterizationFeaturesEXT))
-						+nullptr+)))
-				      (when line-rasterization
-					(push p-lr-features allocs)
-					(zero-struct
-					 p-lr-features
-					 '(:struct %vk::VkPhysicalDeviceLineRasterizationFeaturesEXT))
-					(setf (foreign-slot-value
-					       p-lr-features
-					       '(:struct %vk::VkPhysicalDeviceLineRasterizationFeaturesEXT)
-					       '%vk::sType)
-					      %vk::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT)
-					(fill-physical-device-line-rasterization-features-ext
-					 p-lr-features
-					 :rectangular-lines (if rectangular-lines VK_TRUE VK_FALSE)
-					 :bresenham-lines (if bresenham-lines VK_TRUE VK_FALSE)
-					 :smooth-lines (if smooth-lines VK_TRUE VK_FALSE)
-				       
-					 :stippled-rectangular-lines
-					 (if (and stippled-lines rectangular-lines) VK_TRUE VK_FALSE)
-					 :stippled-bresenham-lines
-					 (if (and stippled-lines bresenham-lines) VK_TRUE VK_FALSE)
-					 :stippled-smooth-lines
-					 (if (and stippled-lines smooth-lines) VK_TRUE VK_FALSE)))
+				(with-vk-struct (p-create-info VkDeviceCreateInfo)
+				  (let ((p-lr-features
+					  (if line-rasterization
+					      (foreign-alloc
+					       '(:struct %vk::VkPhysicalDeviceLineRasterizationFeaturesEXT))
+					      +nullptr+)))
+				    (when line-rasterization
+				      (push p-lr-features allocs)
+				      (zero-struct
+				       p-lr-features
+				       '(:struct %vk::VkPhysicalDeviceLineRasterizationFeaturesEXT))
+				      (setf (foreign-slot-value
+					     p-lr-features
+					     '(:struct %vk::VkPhysicalDeviceLineRasterizationFeaturesEXT)
+					     '%vk::sType)
+					    %vk::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT)
+				      (fill-physical-device-line-rasterization-features-ext
+				       p-lr-features
+				       :rectangular-lines (if rectangular-lines VK_TRUE VK_FALSE)
+				       :bresenham-lines (if bresenham-lines VK_TRUE VK_FALSE)
+				       :smooth-lines (if smooth-lines VK_TRUE VK_FALSE)
+					 
+				       :stippled-rectangular-lines
+				       (if (and stippled-lines rectangular-lines) VK_TRUE VK_FALSE)
+				       :stippled-bresenham-lines
+				       (if (and stippled-lines bresenham-lines) VK_TRUE VK_FALSE)
+				       :stippled-smooth-lines
+				       (if (and stippled-lines smooth-lines) VK_TRUE VK_FALSE)))
 				    
-				      (with-foreign-slots ((%vk::pNext
-							    %vk::queueCreateInfoCount
-						            %vk::pQueueCreateInfos
-						            %vk::enabledExtensionCount
-						            %vk::ppEnabledExtensionNames
-						            %vk::pEnabledFeatures)
-							   p-create-info
-							   (:struct VkDeviceCreateInfo))
-					(setf %vk::pNext p-features2
-					      %vk::pEnabledFeatures (null-pointer)
-					      %vk::pQueueCreateInfos p-queue-infos
-					      %vk::queueCreateInfoCount (length queue-indices-and-totals)
-					      %vk::ppEnabledExtensionNames p-device-extensions
-					      %vk::enabledExtensionCount device-extension-count))
-				      (with-foreign-object (p-device 'VkDevice)
-					(check-vk-result (vkCreateDevice (h gpu) p-create-info (h allocator) p-device))
-					(let ((device (make-instance 'sgpu-device ;; todo put queue objects in device slots!
-								     :handle (mem-aref p-device 'VkDevice)
-								     :physical-device gpu
-								     :allocator allocator
-								     :max-usable-sample-count
-								     (get-max-usable-sample-count gpu))))
-					  (push device (logical-devices instance))
-					  (loop for queue in queue-indices-and-totals
-						do
-						   (push (list (first queue)
-						               (loop for i from 0 below (second queue)
-							             collect
-							             (get-device-queue device (first queue) i (third queue))))
-							 (device-queues device)))
-					  (when (> transfer-queue-count 0)
-					    (setf (device-transfer-queue device)
-						  (acquire-queue device (first transfer-queue-family-index))))
-					  device)))))
+				    (with-foreign-slots ((%vk::pNext
+							  %vk::queueCreateInfoCount
+							  %vk::pQueueCreateInfos
+							  %vk::enabledExtensionCount
+							  %vk::ppEnabledExtensionNames
+							  %vk::pEnabledFeatures)
+							 p-create-info
+							 (:struct VkDeviceCreateInfo))
+				      (setf %vk::pNext p-features2
+					    %vk::pEnabledFeatures (null-pointer)
+					    %vk::pQueueCreateInfos p-queue-infos
+					    %vk::queueCreateInfoCount (length queue-specs)
+					    %vk::ppEnabledExtensionNames p-device-extensions
+					    %vk::enabledExtensionCount device-extension-count))
+				    (with-foreign-object (p-device 'VkDevice)
+				      (check-vk-result (vkCreateDevice (h gpu) p-create-info (h allocator) p-device))
+				      (let ((device (make-instance 'sgpu-device
+								   :handle (mem-aref p-device 'VkDevice)
+								   :physical-device gpu
+								   :allocator allocator
+								   :max-usable-sample-count
+								   (get-max-usable-sample-count gpu))))
+					(push device (logical-devices instance))
+					(setf (device-queues device)
+					      (loop for queue-spec in queue-specs
+						    append
+						    (loop for i from 0 below (cadr (cadr queue-spec))
+							  collect
+							  (get-device-queue device (car queue-spec) i (car (cadr queue-spec))))))
+					(when (> transfer-queue-count 0)
+					  (setf (device-transfer-queue device)
+						(acquire-queue device VK_QUEUE_TRANSFER_BIT)))
+					device)))))
 
-			     (loop for pointer in allocs do (foreign-free pointer))))))))
-		 
+			   (loop for pointer in allocs do (foreign-free pointer)))))))
+	      
 	      (loop for i from 0 below device-extension-count
-	            do (foreign-string-free (mem-aref p-device-extensions :pointer i))))))))))
+		    do (foreign-string-free (mem-aref p-device-extensions :pointer i))))))))))
 
 (defun begin-single-time-commands (device command-pool)
   (with-vk-struct (p-alloc-info VkCommandBufferAllocateInfo)
@@ -615,13 +593,11 @@
 		  (fallback)))
 	    (fallback))))))
 
-(defun get-device-queue (device queue-family-index queue-index type)
+(defun get-device-queue (device queue-family-index queue-index flags)
   (with-foreign-object (p-queue 'VkQueue)
     (vkGetDeviceQueue (h device) queue-family-index queue-index p-queue)
-    (make-instance (ecase type
-		     (:dedicated 'dedicated-queue)
-		     (:multipurpose 'multipurpose-queue))
+    (make-instance 'queue
 		   :handle (mem-aref p-queue 'VkQueue)
 		   :device device
-		   :family-index queue-family-index
-		   :index queue-index)))
+		   :flags flags
+		   :family-index queue-family-index)))

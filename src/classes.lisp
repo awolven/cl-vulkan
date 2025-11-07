@@ -863,11 +863,8 @@
 
 (defclass queue (handle-mixin logical-device-mixin)
   ((family-index :initarg :family-index :reader queue-family-index)
+   (flags :initarg :flags :reader queue-flags)
    (index :initarg :index :reader queue-index)))
-
-(defclass dedicated-queue (queue) ())
-
-(defclass multipurpose-queue (queue) ())
 
 (defclass allocated-memory-mixin ()
   ((size :initarg :size :reader size)

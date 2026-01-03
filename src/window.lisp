@@ -56,10 +56,10 @@
       (values))))
 
 
-(defmethod clui::destroy-window ((window vulkan-window))
+(defmethod clui::destroy-window ((window vulkan-window-mixin))
   (destroy-os-window window))
 
-(defmethod destroy-os-window ((window vulkan-window))
+(defmethod destroy-os-window ((window vulkan-window-mixin))
   (let* ((dpy (clui:window-display window))
 	 (device (default-logical-device dpy))
 	 (vkinstance *vulkan-instance*))
@@ -67,4 +67,30 @@
     (destroy-swapchain (swapchain window))
     (vkDestroySurfaceKHR (h vkinstance) (h (render-surface window)) (h (allocator device)))))
 
+(defmethod clui:initialize-window-devices ((window vulkan-window-mixin) &rest args &key width height &allow-other-keys)
+  (declare (ignore args))
+  (let* ((device (default-logical-device (clui:window-display window)))
+	 (surface (create-window-surface device window)))
+    (let* ((surface-format (find-supported-format
+			    surface
+			    :requested-image-format (window-desired-format window)
+			    :requested-color-space (window-desired-color-space window)))
+           (present-mode (get-physical-device-surface-present-mode (paired-gpu surface) surface))
+	   (render-pass (display-default-render-pass (clui:window-display window))))
+      
+      (setf (render-pass window) render-pass)
+
+      (let ((swapchain (create-swapchain device window width height surface-format present-mode)))
+	(setf (swapchain window) swapchain)
+
+	(setup-framebuffers device render-pass swapchain)
+      
+	(create-frame-resources device window (number-of-images swapchain) (queue-family-index surface))
+
+	(with-slots (queue command-pool) window
+	  (let ((index (queue-family-index surface)))
+	    (setf queue (acquire-queue device VK_QUEUE_GRAPHICS_BIT))
+	    (setf command-pool (find-command-pool device index))))
+      
+	(values)))))
 

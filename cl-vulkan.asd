@@ -78,6 +78,7 @@
    (:file "src/command-buffers")
    (:file "src/sampler")
    (:file "src/spirv")
+   (:file "src/vulkan-display")
    #+linux(:file "src/x11")
    #+os-windows(:file "src/win32")
    #+darwin(:file "src/cocoa")

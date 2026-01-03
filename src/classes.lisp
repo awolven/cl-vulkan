@@ -67,7 +67,6 @@
    (queues :initform nil :accessor device-queues)
    (transfer-queue :initform nil :accessor device-transfer-queue)
    (transfer-queue-lock :initform (bt:make-lock "transfer queue lock") :accessor device-transfer-queue-lock)
-   (stock-render-passess :initform (make-hash-table) :accessor stock-render-passes)
    (max-usable-sample-count :initform VK_SAMPLE_COUNT_1_BIT
 			    :initarg :max-usable-sample-count
 			    :accessor max-usable-sample-count)
@@ -130,7 +129,8 @@
 		:initarg :app)
    (surface :initform nil
 	    :accessor render-surface)
-   (command-pool :accessor command-pool)
+   (queue :accessor window-queue)
+   (command-pool :accessor command-pool :accessor window-command-pool)
    (clear-value
     :initform (make-array 4 :element-type 'single-float
 			  :initial-contents (list 0.45f0 0.55f0 0.60f0 1.0f0))
@@ -1103,6 +1103,7 @@
 (defclass vulkan-enabled-display-mixin ()
   ((default-logical-device :accessor default-logical-device)
    (window-registry :initform nil :accessor window-registry)
+   (default-render-pass :initform nil :accessor display-default-render-pass)
    (main-window :accessor main-window)))
 
 (defclass vulkan-module ()

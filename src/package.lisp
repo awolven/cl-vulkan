@@ -84,6 +84,9 @@
 	   #:compute-pipeline-create-info
 	   #:shader-stage-create-info
 	   #:command-pool
+	   #:window-command-pool
+	   #:window-queue
+	   #:queue
 	   #:framebuffer
 	   #:vertex-buffer
 	   #:index-buffer
@@ -239,7 +242,6 @@
 	   #:render-surface
 	   #:command-buffers
 	   #:end-command-buffer
-	   #:main
 	   #:h
 	   #:recreate-swapchain?
 	   #:frame-command-buffer
@@ -280,4 +282,6 @@
 	   #:clampf
 
 	   #:+buffer-alignment+
-	   #:aligned-size))
+	   #:aligned-size
+
+	   #:display-default-render-pass))

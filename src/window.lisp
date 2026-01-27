@@ -55,6 +55,8 @@
       (setf (window-initialized? window) t)
       (values))))
 
+(defmethod clim:handle-event :before ((window vulkan-window-mixin) (event clui::window-close-event-mixin))
+  (setf (window-initialized? window) nil))
 
 (defmethod clui::destroy-window ((window vulkan-window-mixin))
   (destroy-os-window window))
@@ -63,7 +65,7 @@
   (let* ((dpy (clui:window-display window))
 	 (device (default-logical-device dpy))
 	 (vkinstance *vulkan-instance*))
-    (vkDeviceWaitIdle device)
+    (vkDeviceWaitIdle (h device))
     (destroy-swapchain (swapchain window))
     (vkDestroySurfaceKHR (h vkinstance) (h (render-surface window)) (h (allocator device)))))
 

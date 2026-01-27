@@ -50,7 +50,7 @@ typedef struct VkMacOSSurfaceCreateInfoMVK {
     (with-foreign-object (p-surface 'VkSurfaceKHR)
       
       (let ((bundle (ns::|bundleWithPath:| #@NSBundle
-			      (objc-runtime::make-nsstring "/System/Library/Frameworks/QuartzCore.framework"))))
+			      (clui::make-nsstring "/System/Library/Frameworks/QuartzCore.framework"))))
 	#+NIL
 	(when (cffi:null-pointer-p bundle)
 	  (error "Cocoa: Failed to find QuartzCore.framework"))
@@ -58,7 +58,7 @@ typedef struct VkMacOSSurfaceCreateInfoMVK {
 	(setf (clui::window-layer window)
 	      (ns::|layer| (if (cffi:null-pointer-p bundle)
 			       #@CAMetalLayer
-			       (ns::|classNamed:| bundle (objc-runtime::make-nsstring "CAMetalLayer")))))
+			       (ns::|classNamed:| bundle (clui::make-nsstring "CAMetalLayer")))))
 
 	(when (cffi:null-pointer-p (clui::window-layer window))
 	  (error "Cocoa: Failed to create layer for view."))
